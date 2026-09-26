@@ -44,8 +44,7 @@ def show_incantation():
     # Each line: (text, list of key phrases to accent in crimson)
     lines = [
         ("I, who am about to awaken,", []),
-        ("Am the Genesis of Time,", ["Genesis of Time"]),
-        ("who has stolen the principles of domination from God.", ["domination"]),
+        ("Am the Genesis of Time, who has stolen the principles of domination from God.", ["Genesis of Time", "domination"]),
         ('I laugh at the "infinite," and I grieve over the "dream."', ['"infinite,"', '"dream."']),
         ("I shall become the Omniscience,", ["Omniscience"]),
         ("creating the path through the Crimson Purgatory!", ["Crimson Purgatory"]),
