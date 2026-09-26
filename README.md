@@ -19,16 +19,20 @@
 
 <div align="center">
 
-> ### 🩸 *The Awakening*
->
-> *I, who am about to awaken,*
-> *Am the Genesis of Time,*
-> *who has stolen the principles of domination from God.*
-> *I laugh at the "infinite," and I grieve over the "dream."*
-> *I shall become the Omniscience,*
-> *creating the path through the Crimson Purgatory!*
+### 🩸 The Awakening 🩸
+
+<samp>
+<b>I, who am about to awaken,</b><br/>
+<b>Am the Genesis of Time,</b><br/>
+<b>who has stolen the principles of domination from God.</b><br/>
+<b>I laugh at the &ldquo;infinite,&rdquo; and I grieve over the &ldquo;dream.&rdquo;</b><br/>
+<b>I shall become the Omniscience,</b><br/>
+<b>creating the path through the Crimson&nbsp;Purgatory!</b>
+</samp>
 
 </div>
+
+---
 
 Chronos is part of the **Chatty** family. It runs on **your** hardware, keeps your
 data private by default, and acts as an omniscient, reactive assistant for real
