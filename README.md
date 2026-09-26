@@ -86,41 +86,106 @@ multi-agent**.
 
 1. **Install Python 3.10+** from [python.org/downloads](https://www.python.org/downloads/).
    *On Windows, tick **"Add Python.exe to PATH"** during install.*
-2. **Install [Ollama](https://ollama.com/)** and pull a model:
+2. **Install [Ollama](https://ollama.com/)** (your local AI engine), then pull a model:
    ```bash
    ollama pull qwen3:8b
    ```
 3. **Download Chronos:** click the green **"<> Code"** button → **Download ZIP**, then extract.
-4. **Install & run:**
+4. **Open a terminal in the extracted folder** and install into a virtual environment:
    ```bash
+   python -m venv .venv
+   # Windows:
+   .venv\Scripts\activate
+   # Linux / macOS:
+   source .venv/bin/activate
+
    pip install -e .
+   ```
+5. **Run it:**
+   ```bash
    python main.py
    ```
 
 That's it — Chronos talks to your local Ollama out of the box.
+
+> **First run:** Chronos downloads a small (~80 MB) embedding model once (for memory
+> and RAG). This is a one-time setup; subsequent starts are instant.
 
 ### 💻 Developer (Git)
 
 ```bash
 git clone https://github.com/georgevpopa/Chatty-Chronos-v3.git
 cd Chatty-Chronos-v3
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e .
 python main.py          # terminal REPL
 python main.py --web    # web dashboard (opens in browser)
 ```
 
-### 🧠 Using llama.cpp instead of Ollama (optional, GPU tuning)
+---
 
-1. Download a `llama-server` binary for your OS from
-   [llama.cpp releases](https://github.com/ggerganov/llama.cpp/releases).
-2. Download a GGUF model (e.g. a `Q4_K_M` quant) and note its path.
-3. Point Chronos at it:
+## 🔗 Connect an LLM (step by step)
+
+Chronos needs at least one LLM. Pick **local** (private, free) or **cloud** (API key).
+You can configure several and switch anytime with `/provider` and `/model`.
+
+### Option 1 — Local with Ollama (easiest, private)
+
+```bash
+ollama pull qwen3:8b          # 1. download a model (any Ollama model works)
+```
+Then inside Chronos:
+```
+chronos > /provider ollama    # 2. use the local Ollama provider (this is the default)
+chronos > /model qwen3:8b     # 3. select the model you pulled
+chronos > /providers          # 4. verify it shows CONNECTED
+```
+Larger models (e.g. `llama3.3:70b`, `gpt-oss:120b`) work the same way if your RAM allows.
+
+### Option 2 — Local with llama.cpp (GGUF, GPU tuning)
+
+1. Download a `llama-server` binary from
+   [llama.cpp releases](https://github.com/ggerganov/llama.cpp/releases) and a GGUF model
+   (e.g. a `Q4_K_M` quant).
+2. Point Chronos at it:
    ```
+   chronos > /config local_server_bin /path/to/llama-server   # or set env CHRONOS_LLAMA_SERVER
    chronos > /config provider llamacpp
    chronos > /config llamacpp_host http://localhost:8080
    ```
-   Set the binary path via config `local_server_bin` or the `CHRONOS_LLAMA_SERVER`
-   environment variable — no path is hardcoded.
+   No path is hardcoded — you choose your binary and model.
+
+### Option 3 — Cloud API (Groq, Gemini, OpenRouter, …)
+
+1. Create a `.env` file in the project root and add your key(s) — **never commit it**:
+   ```bash
+   GROQ_API_KEY=your_key_here
+   GEMINI_API_KEY=your_key_here
+   OPENROUTER_API_KEY=your_key_here
+   ```
+2. Activate the provider inside Chronos:
+   ```
+   chronos > /providers                 # see which providers have a key configured
+   chronos > /provider groq             # switch to it
+   chronos > /model llama-3.3-70b-versatile   # pick a model that provider serves
+   ```
+   Keys are hot-reloaded — no restart needed. Cloud is always **opt-in**.
+
+### Option 4 — AI gateway (e.g. OmniRoute) — optional
+
+Route through one OpenAI-compatible endpoint to reach many providers, free tiers, and
+automatic fallback. Add it to `~/.chatty-chronos/providers.json`:
+```json
+{
+  "name": "gateway",
+  "type": "openai_compatible",
+  "base_url": "http://YOUR_GATEWAY_HOST:PORT/v1",
+  "model": "auto/coding",
+  "env_key": "GATEWAY_API_KEY"
+}
+```
+Then `/provider gateway`. If your gateway needs no key, omit `env_key` — requests are
+sent keyless. The gateway is entirely optional; Chronos never requires it.
 
 ---
 
@@ -205,41 +270,6 @@ class HelloPlugin(Plugin):
         if command == "/hello":
             return f"Hello, {arg or 'world'}!"
 ```
-
----
-
-## ☁️ Cloud providers (optional)
-
-Chronos works with zero cloud keys. To add cloud models, put keys in a `.env` file
-in the project root (never commit it):
-
-```bash
-GROQ_API_KEY=...
-GEMINI_API_KEY=...
-OPENROUTER_API_KEY=...
-```
-
-Any OpenAI-compatible endpoint — including a self-hosted gateway — can be added as a
-provider. Cloud is always **opt-in**; local stays the default.
-
-### Using an AI gateway (e.g. OmniRoute) — optional
-
-You can route Chronos through an OpenAI-compatible gateway to reach many providers,
-free tiers, and automatic fallback through a single endpoint. Add it to
-`~/.chatty-chronos/providers.json`:
-
-```json
-{
-  "name": "gateway",
-  "type": "openai_compatible",
-  "base_url": "http://YOUR_GATEWAY_HOST:PORT/v1",
-  "model": "auto/coding",
-  "env_key": "GATEWAY_API_KEY"
-}
-```
-
-Then `/config provider gateway`. If your gateway needs no key, omit `env_key` — the
-request is sent keyless. The gateway is entirely optional; Chronos never requires it.
 
 ---
 
