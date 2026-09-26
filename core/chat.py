@@ -139,11 +139,12 @@ def _send_message_stream_locked(user_input):
 
             if tool_call_marker:
                 tool_calls_payload = []
+                tc_ids = {}
                 for tc in tool_call_marker.tool_calls:
                     tc_id = getattr(tc, "id", None) or f"call_{uuid.uuid4().hex[:8]}"
-                    tc.id = tc_id
+                    tc_ids[id(tc)] = tc_id
                     tool_calls_payload.append({
-                        "id": tc.id,
+                        "id": tc_id,
                         "type": "function",
                         "function": {"name": tc.function.name, "arguments": tc.function.arguments}
                     })
@@ -156,7 +157,7 @@ def _send_message_stream_locked(user_input):
                     yield {"type": "status", "content": f"Executing tool: {func_name}..."}
                     result = execute_tool_call(tc)
                     state._token_usage["tool_calls"] += 1
-                    state.messages.append({"role": "tool", "content": result, "tool_call_id": tc.id})
+                    state.messages.append({"role": "tool", "content": result, "tool_call_id": tc_ids[id(tc)]})
                     yield {"type": "tool_result", "name": func_name, "result": result}
                 continue
 
@@ -250,13 +251,16 @@ def _send_message_locked(user_input):
                     response = ollama_provider.chat(state.messages, model, host, tools=tools_schema)
 
             if response.message.tool_calls:
+                # Generate a stable id per tool call WITHOUT mutating the tool_call
+                # object (newer ollama versions use frozen Pydantic models).
+                tc_ids = {}
                 for tc in response.message.tool_calls:
-                    if not getattr(tc, "id", None):
-                        tc.id = f"call_{uuid.uuid4().hex[:8]}"
+                    existing = getattr(tc, "id", None)
+                    tc_ids[id(tc)] = existing or f"call_{uuid.uuid4().hex[:8]}"
 
                 state.messages.append({"role": "assistant", "content": "", "tool_calls": [
                     {
-                        "id": tc.id,
+                        "id": tc_ids[id(tc)],
                         "type": "function",
                         "function": {"name": tc.function.name, "arguments": tc.function.arguments}
                     }
@@ -266,7 +270,7 @@ def _send_message_locked(user_input):
                 for tc in response.message.tool_calls:
                     result = execute_tool_call(tc)
                     state._token_usage["tool_calls"] += 1
-                    state.messages.append({"role": "tool", "content": result, "tool_call_id": tc.id})
+                    state.messages.append({"role": "tool", "content": result, "tool_call_id": tc_ids[id(tc)]})
 
                 continue
 

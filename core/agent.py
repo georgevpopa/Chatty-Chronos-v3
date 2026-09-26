@@ -127,14 +127,16 @@ class ReActAgent:
                     # Tool calls — execute and continue
                     if response.message.tool_calls:
                         import uuid
-                        # Ensure each tool call has an ID
+                        # Assign a stable id per tool call WITHOUT mutating the
+                        # tool_call object (newer ollama uses frozen Pydantic models).
+                        tc_ids = {}
                         for tc in response.message.tool_calls:
-                            if not getattr(tc, "id", None):
-                                tc.id = f"call_{uuid.uuid4().hex[:8]}"
+                            existing = getattr(tc, "id", None)
+                            tc_ids[id(tc)] = existing or f"call_{uuid.uuid4().hex[:8]}"
 
                         tool_calls_payload = [
                             {
-                                "id": tc.id,
+                                "id": tc_ids[id(tc)],
                                 "type": "function",
                                 "function": {
                                     "name": tc.function.name, 
@@ -170,7 +172,7 @@ class ReActAgent:
                             result = self._execute_tool(tc)
                             latency = time.time() - start_time
                             
-                            self.messages.append({"role": "tool", "content": result, "tool_call_id": tc.id})
+                            self.messages.append({"role": "tool", "content": result, "tool_call_id": tc_ids[id(tc)]})
                             
                             if yield_func:
                                 yield_func({"type": "tool_result", "name": tc.function.name, "result": result})
