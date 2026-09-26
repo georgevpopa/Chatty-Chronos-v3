@@ -63,19 +63,30 @@ class TestChat:
         assert result.message.content == ""
         assert len(result.message.tool_calls) == 1
 
-    def test_missing_api_key(self):
-        """Raises ValueError when API key is not in environment."""
-        from llm.openai_provider import chat
+    @patch("llm.openai_provider.httpx.Client")
+    def test_missing_api_key_is_keyless(self, mock_client_cls):
+        """Without an API key, the request is sent WITHOUT an Authorization header
+        (supports local keyless gateways like OmniRoute). No error is raised."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"choices": [{"message": {"content": "ok"}}]}
+        mock_client = MagicMock()
+        mock_client.post.return_value = mock_response
+        mock_client_cls.return_value.__enter__ = MagicMock(return_value=mock_client)
+        mock_client_cls.return_value.__exit__ = MagicMock(return_value=False)
 
-        with patch.dict(os.environ, {"HOME": "/tmp", "USERPROFILE": "/tmp"}, clear=False), \
-             patch("dotenv.load_dotenv"):
-            with pytest.raises(ValueError, match="API key not found"):
-                chat(
-                    messages=[{"role": "user", "content": "Hi"}],
-                    base_url="https://api.example.com/v1",
-                    api_key_name="NONEXISTENT_KEY",
-                    model="gpt-4o"
-                )
+        from llm.openai_provider import chat
+        with patch("dotenv.load_dotenv"):
+            result = chat(
+                messages=[{"role": "user", "content": "Hi"}],
+                base_url="http://localhost:20128/v1",
+                api_key_name="NONEXISTENT_KEY",
+                model="auto/coding:free",
+            )
+        # Call succeeded and no Authorization header was sent
+        _, kwargs = mock_client.post.call_args
+        assert "Authorization" not in kwargs["headers"]
+        assert result.message.content == "ok"
 
     @patch("llm.openai_provider.httpx.Client")
     def test_message_formatting(self, mock_client_cls):

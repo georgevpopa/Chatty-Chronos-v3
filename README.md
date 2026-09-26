@@ -222,6 +222,25 @@ OPENROUTER_API_KEY=...
 Any OpenAI-compatible endpoint — including a self-hosted gateway — can be added as a
 provider. Cloud is always **opt-in**; local stays the default.
 
+### Using an AI gateway (e.g. OmniRoute) — optional
+
+You can route Chronos through an OpenAI-compatible gateway to reach many providers,
+free tiers, and automatic fallback through a single endpoint. Add it to
+`~/.chatty-chronos/providers.json`:
+
+```json
+{
+  "name": "gateway",
+  "type": "openai_compatible",
+  "base_url": "http://YOUR_GATEWAY_HOST:PORT/v1",
+  "model": "auto/coding",
+  "env_key": "GATEWAY_API_KEY"
+}
+```
+
+Then `/config provider gateway`. If your gateway needs no key, omit `env_key` — the
+request is sent keyless. The gateway is entirely optional; Chronos never requires it.
+
 ---
 
 ## 📂 Configuration & data

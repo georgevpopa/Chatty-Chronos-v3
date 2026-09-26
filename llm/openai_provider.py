@@ -8,23 +8,31 @@ import httpx
 from llm.llamacpp_provider import LlamaCppResponse
 
 
-def chat(messages: list, base_url: str, api_key_name: str, model: str, tools=None) -> LlamaCppResponse:
-    """Send chat completion to OpenAI-compatible cloud provider."""
+def chat(messages: list, base_url: str, api_key_name: str = "", model: str = "", tools=None) -> LlamaCppResponse:
+    """Send chat completion to an OpenAI-compatible endpoint.
+
+    Works with cloud providers (Groq, Gemini, OpenRouter, ...) AND local/self-hosted
+    gateways (e.g. OmniRoute, LM Studio) that may not require an API key.
+
+    Args:
+        base_url: e.g. "https://api.groq.com/openai/v1" or "http://host:20128/v1"
+        api_key_name: name of the env var holding the key. If empty or unset, the
+                      request is sent without an Authorization header (keyless gateways).
+        model: model id to request.
+    """
     # Hot-reload environment variables to capture newly added keys
     from dotenv import load_dotenv
     from pathlib import Path
     load_dotenv(Path.cwd() / ".env", override=True)
     load_dotenv(Path.home() / ".chatty-chronos" / ".env", override=True)
 
-    api_key = os.environ.get(api_key_name, "")
-    if not api_key:
-        raise ValueError(f"API key not found in environment: {api_key_name}. Please check your .env file.")
+    api_key = os.environ.get(api_key_name, "") if api_key_name else ""
 
     url = f"{base_url}/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Content-Type": "application/json"}
+    # Authorization is optional — many local gateways accept keyless requests.
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
     
     formatted_messages = []
     for m in messages:
