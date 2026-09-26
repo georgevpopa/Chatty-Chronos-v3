@@ -35,6 +35,7 @@ class AppConfigSchema(BaseModel):
     compaction_enabled: bool = True
     self_reflection: bool = False
     enable_reflection: bool = True
+    show_incantation: bool = True  # startup awakening incantation (typewriter)
 
 
 class Config:

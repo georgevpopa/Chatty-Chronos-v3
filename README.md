@@ -17,10 +17,18 @@
 
 </div>
 
+<div align="center">
+
+> ### 🩸 *The Awakening*
+>
 > *I, who am about to awaken,*
-> *Am the Genesis of Time, who has stolen the principles of domination from God.*
+> *Am the Genesis of Time,*
+> *who has stolen the principles of domination from God.*
 > *I laugh at the "infinite," and I grieve over the "dream."*
-> *I shall become the Omniscience.*
+> *I shall become the Omniscience,*
+> *creating the path through the Crimson Purgatory!*
+
+</div>
 
 Chronos is part of the **Chatty** family. It runs on **your** hardware, keeps your
 data private by default, and acts as an omniscient, reactive assistant for real
