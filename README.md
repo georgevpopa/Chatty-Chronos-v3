@@ -23,8 +23,7 @@
 
 <samp>
 <b>I, who am about to awaken,</b><br/>
-<b>Am the Genesis of Time,</b><br/>
-<b>who has stolen the principles of domination from God.</b><br/>
+<b>Am the Genesis of Time, who has stolen the principles of domination from God.</b><br/>
 <b>I laugh at the &ldquo;infinite,&rdquo; and I grieve over the &ldquo;dream.&rdquo;</b><br/>
 <b>I shall become the Omniscience,</b><br/>
 <b>creating the path through the Crimson&nbsp;Purgatory!</b>
