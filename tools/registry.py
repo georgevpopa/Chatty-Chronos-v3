@@ -8,7 +8,7 @@ from tools.filesystem import ReadFile, WriteFile, SearchReplace, ListDirectory, 
 from tools.shell import ExecuteCommand
 from tools.agent_delegator import DelegateSubtask
 from tools.human import AskUser
-from tools.web import FetchWebpage
+from tools.web import FetchWebpage, WebSearch
 from tools.python_repl import RunPython
 from tools.memory_tools import StoreMemory, SearchMemory
 
@@ -25,6 +25,7 @@ _BUILTIN_TOOLS = [
     DelegateSubtask(),
     AskUser(),
     FetchWebpage(),
+    WebSearch(),
     RunPython(),
     StoreMemory(),
     SearchMemory(),

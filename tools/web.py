@@ -96,3 +96,110 @@ class FetchWebpage(Tool):
             return f"Failed to fetch {url}: {e.reason}"
         except Exception as e:
             return f"Error fetching {url}: {str(e)}"
+
+
+# ─── Web Search (DuckDuckGo, no API key) ─────────────────────────────────────
+
+class WebSearchSchema(BaseModel):
+    query: str = Field(..., description="The search query — what to look up on the web.")
+    max_results: int = Field(5, description="Maximum number of results to return (1-10).")
+
+
+class WebSearch(Tool):
+    """Search the web (DuckDuckGo HTML endpoint, no API key required).
+
+    Returns a list of results (title, snippet, URL). Use it when you need current
+    information, or information beyond your training data, then optionally call
+    fetch_webpage on the most relevant URL to read it in full.
+    """
+
+    def __init__(self):
+        super().__init__(
+            name="web_search",
+            description=(
+                "Search the internet for current or unknown information. Returns a "
+                "ranked list of results (title, snippet, URL). Use this when the user "
+                "asks about recent events, versions, prices, or anything you are unsure "
+                "of or that may be newer than your knowledge. Follow up with "
+                "fetch_webpage on a result URL to read the full page."
+            ),
+            input_schema=WebSearchSchema,
+            requires_permission=False,
+        )
+
+    def execute(self, query: str, max_results: int = 5, **kwargs) -> str:
+        import urllib.parse
+        import urllib.request
+        import re
+        from html import unescape
+
+        max_results = max(1, min(int(max_results or 5), 10))
+        # DuckDuckGo HTML endpoint (no API key). POST is more reliable than GET here.
+        url = "https://html.duckduckgo.com/html/"
+        data = urllib.parse.urlencode({"q": query}).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChattyChronos/3.0",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                html = resp.read().decode("utf-8", errors="replace")
+        except Exception as e:
+            return f"Web search failed for '{query}': {e}"
+
+        # Parse result blocks. DuckDuckGo HTML uses result__a for links and
+        # result__snippet for snippets.
+        results = []
+        # Links: <a ... class="result__a" href="...">Title</a>
+        link_pattern = re.compile(
+            r'<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>',
+            re.DOTALL | re.IGNORECASE,
+        )
+        snippet_pattern = re.compile(
+            r'<a[^>]*class="result__snippet"[^>]*>(.*?)</a>',
+            re.DOTALL | re.IGNORECASE,
+        )
+
+        def _clean(raw: str) -> str:
+            text = re.sub(r"<[^>]+>", "", raw)  # strip tags
+            return unescape(text).strip()
+
+        def _resolve(href: str) -> str:
+            # DuckDuckGo wraps links like /l/?uddg=<encoded-url>
+            if href.startswith("//duckduckgo.com/l/") or "uddg=" in href:
+                m = re.search(r"uddg=([^&]+)", href)
+                if m:
+                    return urllib.parse.unquote(m.group(1))
+            if href.startswith("//"):
+                return "https:" + href
+            return href
+
+        links = link_pattern.findall(html)
+        snippets = snippet_pattern.findall(html)
+
+        for i, (href, title) in enumerate(links[:max_results]):
+            snippet = _clean(snippets[i]) if i < len(snippets) else ""
+            results.append({
+                "title": _clean(title),
+                "url": _resolve(href),
+                "snippet": snippet,
+            })
+
+        if not results:
+            return (
+                f"No web results found for '{query}'. The search page format may have "
+                f"changed, or the query returned nothing. Consider asking the user for a source."
+            )
+
+        lines = [f"Web search results for '{query}':\n"]
+        for i, r in enumerate(results, 1):
+            lines.append(f"{i}. {r['title']}")
+            if r["snippet"]:
+                lines.append(f"   {r['snippet']}")
+            lines.append(f"   {r['url']}\n")
+        return "\n".join(lines)
