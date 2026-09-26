@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.*
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ChromaDB
+vectordb/
+
+# Logs
+*.log
+
+# Deployment artifacts
+_cleanup.bat
+
+# Internal working notes (NOT for the public product repo)
+docs/SESSION_HANDOFF.md
+docs/V3_ARCHITECTURE_PLAN.md
+docs/V3_PRODUCT_AUDIT.md
+docs/PRODUCT_IDENTITY.md
+docs/raport_stadiu.md
+docs/raport_diagnostic.md
+docs/raport_comenzi.md
+docs/current_status_and_gaps_resolved.md
+
+# Test venv
+.testvenv/
+
+# Stray personal notes
+docs/pornire chat kiro.txt
+*.session.json
+chronos-v3-session.json

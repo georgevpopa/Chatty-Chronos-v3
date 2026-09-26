@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatty Chronos - Premium Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #070913;
+            --bg-surface: rgba(15, 22, 42, 0.65);
+            --bg-card: rgba(30, 41, 59, 0.45);
+            --border-glow: rgba(0, 240, 255, 0.15);
+            --border-soft: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00f0ff;
+            --accent-violet: #8a2be2;
+            --accent-green: #39ff14;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-base);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(138, 43, 226, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.1) 0px, transparent 50%);
+        }
+
+        /* Dashboard Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            height: 100vh;
+            backdrop-filter: blur(8px);
+        }
+
+        /* Sidebar & Panel Styling */
+        .panel {
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-soft);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            backdrop-filter: blur(16px);
+        }
+
+        .panel-right {
+            border-right: none;
+            border-left: 1px solid var(--border-soft);
+        }
+
+        .panel-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-soft);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .panel-header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .panel-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Status Cards */
+        .status-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .status-card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .status-label {
+            color: var(--text-muted);
+        }
+
+        .status-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 2s infinite;
+            margin-right: 6px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(57, 255, 20, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(57, 255, 20, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(57, 255, 20, 0); }
+        }
+
+        /* Interactive Controls */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select, input, button {
+            background: rgba(15, 22, 42, 0.8);
+            border: 1px solid var(--border-soft);
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn-glow {
+            background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(0, 240, 255, 0.4);
+        }
+
+        .btn-glow:active {
+            transform: translateY(1px);
+        }
+
+        /* Toggle Switches */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .3s;
+            border-radius: 24px;
+            border: 1px solid var(--border-soft);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px; width: 16px;
+            left: 3px; bottom: 3px;
+            background-color: var(--text-muted);
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: rgba(0, 240, 255, 0.2);
+            border-color: var(--accent-cyan);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+            background-color: var(--accent-cyan);
+        }
+
+        /* Chat Area Layout */
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: rgba(7, 9, 19, 0.4);
+        }
+
+        .chat-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-soft);
+            background: rgba(15, 22, 42, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Message Bubbles & Cards */
+        .message {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 85%;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+        }
+
+        .bubble {
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message.user .bubble {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.35), rgba(0, 240, 255, 0.25));
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0, 240, 255, 0.05);
+        }
+
+        .message.assistant .bubble {
+            background: var(--bg-card);
+            border: 1px solid var(--border-soft);
+            border-bottom-left-radius: 4px;
+        }
+
+        .sender-tag {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .message.user .sender-tag {
+            align-self: flex-end;
+            color: var(--accent-cyan);
+        }
+
+        /* System Logs / Steps */
+        .step-container {
+            border-left: 2px solid var(--accent-cyan);
+            padding-left: 14px;
+            margin: 8px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .step-thought {
+            font-size: 13px;
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
+        .step-action {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            padding: 6px 10px;
+            border-radius: 6px;
+            color: var(--accent-cyan);
+        }
+
+        /* Input Controls */
+        .chat-input-container {
+            padding: 24px;
+            background: rgba(15, 22, 42, 0.4);
+            border-top: 1px solid var(--border-soft);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            position: relative;
+        }
+
+        .chat-input-wrapper input {
+            flex: 1;
+            padding: 16px 20px;
+            border-radius: 12px;
+            background: rgba(7, 9, 19, 0.85);
+            border: 1px solid var(--border-soft);
+            font-size: 15px;
+        }
+
+        .chat-input-wrapper input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .send-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        /* Tool Items in Sidebar */
+        .tool-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .tool-item:hover {
+            background: rgba(0, 240, 255, 0.05);
+            border-color: var(--accent-cyan);
+        }
+
+        .tool-name {
+            font-weight: 600;
+        }
+
+        .tool-tag {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .tool-tag.ask {
+            background: rgba(234, 179, 8, 0.15);
+            color: #eab308;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+
+        .tool-tag.auto {
+            background: rgba(57, 255, 20, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+        }
+
+        /* Loader Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 10px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-soft);
+            width: fit-content;
+        }
+
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: bounce 1.3s infinite ease-in-out;
+        }
+
+        .typing-indicator .status-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-right: 8px;
+            font-weight: 500;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        /* Markdown Styling inside Bubbles */
+        .bubble pre {
+            background: #0f172a;
+            border: 1px solid var(--border-soft);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+        }
+
+        .bubble code {
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.05);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .bubble pre code {
+            color: inherit;
+            background: none;
+            padding: 0;
+        }
+
+        .bubble p {
+            margin-bottom: 8px;
+        }
+
+        .bubble p:last-child {
+            margin-bottom: 0;
+        }
+
+        .bubble ul, .bubble ol {
+            margin-left: 20px;
+            margin-bottom: 8px;
+        }
+
+        /* Session list styling */
+        .session-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 6px;
+        }
+        .session-item:hover, .session-item.active {
+            background: rgba(0, 240, 255, 0.05);
+            border-color: var(--accent-cyan);
+        }
+        .session-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+            font-weight: 500;
+        }
+        .session-delete {
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .session-delete:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Modal Overlay and Content */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 8px 32px 0 rgba(0, 240, 255, 0.15);
+        }
+        
+        .active-tab {
+            color: var(--accent-cyan) !important;
+            border-bottom: 2px solid var(--accent-cyan);
+            padding-bottom: 4px;
+        }
+        .inactive-tab {
+            color: var(--text-muted) !important;
+            border-bottom: 2px solid transparent;
+            padding-bottom: 4px;
+            opacity: 0.7;
+        }
+        
+        .workspace-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .workspace-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .workspace-dir {
+            color: var(--accent-violet);
+            font-weight: 600;
+        }
+        .workspace-file {
+            color: var(--text-main);
+        }
+        
+        .git-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .git-state {
+            color: var(--accent-magenta);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .swarm-item {
+            background: var(--bg-dark);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .swarm-agent {
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+    </style>
+    
+    <!-- Diff2Html for Inline Diff View -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html.min.js"></script>
+    
+    <style>
+        /* Dark theme overrides for Diff2Html */
+        .d2h-file-header { background-color: rgba(30, 41, 59, 0.8) !important; border-bottom: 1px solid var(--border-soft) !important; }
+        .d2h-file-wrapper { border: none !important; border-radius: 8px !important; background-color: rgba(0,0,0,0.3) !important; }
+        .d2h-code-line { color: #d4d4d4 !important; }
+        .d2h-info { background-color: rgba(59, 130, 246, 0.1) !important; color: #60a5fa !important; border-color: rgba(59, 130, 246, 0.2) !important; }
+        .d2h-del { background-color: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.3) !important; }
+        .d2h-ins { background-color: rgba(34, 197, 94, 0.15) !important; border-color: rgba(34, 197, 94, 0.3) !important; }
+        .d2h-code-line-prefix { color: #888 !important; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Panel: Control Center -->
+        <div class="panel">
+            <div class="panel-header">
+                <h1>CHRONOS DASHBOARD</h1>
+            </div>
+            <div class="panel-content">
+                <div class="control-group">
+                    <label class="control-label">Active Provider</label>
+                    <select id="providerSelect" onchange="updateProvider()">
+                        <optgroup label="Local (Open-Source)">
+                            <option value="ollama">Ollama (Local)</option>
+                            <option value="llamacpp">llama.cpp (Local)</option>
+                        </optgroup>
+                        <optgroup label="Cloud (API)">
+                            <option value="nvidia">Nvidia NIM</option>
+                            <option value="gemini">Google Gemini</option>
+                            <option value="groq">Groq Cloud</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Model Selection</label>
+                    <input type="text" id="modelInput" placeholder="Model name" onchange="updateConfig('model', this.value)">
+                </div>
+
+                <div class="control-group" id="restartServerGroup" style="display: none; margin-top: 10px;">
+                    <button class="btn-glow" style="padding: 10px; margin-top: 0; width: 100%; cursor: pointer; background: rgba(0, 240, 255, 0.05); border-color: var(--accent-cyan); color: var(--accent-cyan);" onclick="restartGGUFServer()">🔄 Restart GGUF Server</button>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Visual Theme</label>
+                    <select id="themeSelect" onchange="changeTheme(this.value)">
+                        <option value="cyber-dark">Cyber Dark</option>
+                        <option value="minimal-light">Minimal Light</option>
+                        <option value="deep-purple">Deep Purple</option>
+                        <option value="cybertron">Cybertron</option>
+                        <option value="midnight-navy">Midnight Navy</option>
+                        <option value="forest-sage">Forest Sage</option>
+                        <option value="solar-gold">Solar Gold</option>
+                    </select>
+                </div>
+
+                <div class="status-card">
+                    <div class="status-item">
+                        <span class="status-label">Engine Status</span>
+                        <span class="status-value"><span class="pulse-dot"></span>Active</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">LLM Connection</span>
+                        <span id="connStatus" class="status-value" style="color: var(--accent-green)">Connected</span>
+                    </div>
+                    <div class="status-item" id="ramStatusItem" style="display: none;">
+                        <span class="status-label">System RAM Load</span>
+                        <span id="ramStatus" class="status-value">0%</span>
+                    </div>
+                    <div class="status-item" id="serverMemStatusItem" style="display: none;">
+                        <span class="status-label">Server VRAM/RAM</span>
+                        <span id="serverMemStatus" class="status-value">0 MB</span>
+                    </div>
+                </div>
+
+                <div class="control-group" style="margin-top: 10px;">
+                    <label class="control-label">Engine Security</label>
+                    <div class="toggle-container">
+                        <span class="status-label" style="font-size: 13px;">Auto-Approve Tools</span>
+                        <label class="switch">
+                            <input type="checkbox" id="autoApproveToggle" onchange="updateConfig('auto_approve_tools', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-container">
+                        <span class="status-label" style="font-size: 13px;">Context Compaction</span>
+                        <label class="switch">
+                            <input type="checkbox" id="compactionToggle" onchange="updateConfig('compaction_enabled', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-container">
+                        <span class="status-label" style="font-size: 13px;">Self-Reflection Loop</span>
+                        <label class="switch">
+                            <input type="checkbox" id="selfReflectionToggle" onchange="updateConfig('self_reflection', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 20px;">
+                    <button class="btn-glow" style="flex: 1; padding: 12px;" onclick="clearHistory()">Clear History</button>
+                    <button class="btn-glow" style="padding: 12px 14px; background: rgba(139,92,246,0.08); border-color: #8b5cf6; color: #a78bfa;" onclick="loadLogs()" title="View live logs">📋</button>
+                </div>
+
+                <!-- Sessions List -->
+                <div class="control-group" style="margin-top: 15px; border-top: 1px solid var(--border-soft); padding-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label class="control-label" style="margin-bottom: 0;">Saved Sessions</label>
+                        <button class="btn-glow" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; cursor: pointer; margin-top: 0;" onclick="createNewSession()">+ New</button>
+                    </div>
+                    <div id="sessionsList" style="display: flex; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                        <!-- Sessions will load dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel: Chat Interface -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <div>
+                    <h2 id="activeModelHeader" style="font-size: 16px; font-weight: 600;">Loading...</h2>
+                    <p style="font-size: 12px; color: var(--text-muted);">ReAct Agent Loop Enabled</p>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatWindow">
+                <!-- Messages will load here -->
+            </div>
+
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <input type="text" id="chatInput" placeholder="Ask Chronos to build features, write files or run tasks..." onkeydown="if(event.key === 'Enter') sendMessage()">
+                    <button class="btn-glow send-btn" onclick="sendMessage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Info & Tools / Workspace -->
+        <div class="panel panel-right">
+            <div class="panel-header" style="display: flex; gap: 15px; border-bottom: 1px solid var(--border-soft); padding-bottom: 10px;">
+                <h2 id="tabTools" class="active-tab" style="font-size: 15px; margin: 0; cursor: pointer;" onclick="switchRightTab('tools')">Tools</h2>
+                <h2 id="tabWorkspace" class="inactive-tab" style="font-size: 15px; margin: 0; cursor: pointer;" onclick="switchRightTab('workspace')">Workspace</h2>
+                <h2 id="tabGit" class="inactive-tab" style="font-size: 15px; margin: 0; cursor: pointer;" onclick="switchRightTab('git')">Source Control</h2>
+                <h2 id="tabSwarm" class="inactive-tab" style="font-size: 15px; margin: 0; cursor: pointer;" onclick="switchRightTab('swarm')">Swarm</h2>
+                <h2 id="tabMCP" class="inactive-tab" style="font-size: 15px; margin: 0; cursor: pointer;" onclick="switchRightTab('mcp')">MCP</h2>
+            </div>
+            
+            <div class="panel-content" id="toolsTabContent" style="display: flex; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto; padding-top: 10px;">
+                <label class="control-label">Available Tools</label>
+                <div id="toolsList" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- Tools list loaded dynamically -->
+                </div>
+            </div>
+            
+            <div class="panel-content" id="workspaceTabContent" style="display: none; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto; padding-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="control-label" style="margin-bottom: 0;">Files</label>
+                    <button class="btn-glow" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; cursor: pointer; margin-top: 0;" onclick="loadWorkspaceTree()">🔄 Refresh</button>
+                </div>
+                <div id="workspaceTree" style="display: flex; flex-direction: column; gap: 4px;">
+                    <!-- Workspace tree loaded dynamically -->
+                </div>
+            </div>
+
+            <div class="panel-content" id="gitTabContent" style="display: none; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto; padding-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="control-label" style="margin-bottom: 0;">Git Changes</label>
+                    <button class="btn-glow" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; cursor: pointer; margin-top: 0;" onclick="loadGitStatus()">🔄 Refresh</button>
+                </div>
+                <div id="gitStatusList" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px;">
+                    <!-- Git status list -->
+                </div>
+                <textarea id="gitCommitMessage" class="chat-input" rows="3" placeholder="Commit message..." style="resize: vertical; font-size: 13px;"></textarea>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-glow" style="flex: 1; padding: 8px; font-size: 12px; cursor: pointer;" onclick="suggestCommitMessage()">✨ AI Suggest</button>
+                    <button class="btn-glow" style="flex: 1; padding: 8px; font-size: 12px; cursor: pointer; background: rgba(57, 255, 20, 0.1); border-color: var(--accent-green); color: var(--accent-green);" onclick="commitChanges()">✅ Commit</button>
+                </div>
+            </div>
+
+            <div class="panel-content" id="swarmTabContent" style="display: none; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto; padding-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="control-label" style="margin-bottom: 0;">Active Multi-Agent Swarm</label>
+                    <button class="btn-glow" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; cursor: pointer; margin-top: 0;" onclick="loadSwarmStatus()">🔄 Refresh</button>
+                </div>
+                <div id="swarmList" style="display: flex; flex-direction: column; gap: 6px;">
+                    <!-- Swarm agents -->
+                </div>
+            </div>
+
+            <div class="panel-content" id="mcpTabContent" style="display: none; flex-direction: column; gap: 12px; height: 100%; overflow-y: auto; padding-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="control-label" style="margin-bottom: 0;">MCP Server Registry</label>
+                    <button class="btn-glow" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; cursor: pointer; margin-top: 0;" onclick="loadMCPRegistry()">🔄 Refresh</button>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted);">Activate/deactivate MCP tools with one click.</p>
+                <div id="mcpRegistryList" style="display: flex; flex-direction: column; gap: 6px;">
+                    <!-- MCP Servers -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isGenerating = false;
+
+        const themes = {
+            "cyber-dark": {
+                "--bg-base": "#070913",
+                "--bg-surface": "rgba(15, 22, 42, 0.65)",
+                "--bg-card": "rgba(30, 41, 59, 0.45)",
+                "--accent-cyan": "#00f0ff",
+                "--accent-violet": "#8a2be2",
+                "--border-glow": "rgba(0, 240, 255, 0.15)",
+                "--border-soft": "rgba(255, 255, 255, 0.08)",
+                "--text-main": "#f8fafc",
+                "--text-muted": "#94a3b8",
+                "bg-gradient": "radial-gradient(at 0% 0%, rgba(138, 43, 226, 0.12) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.1) 0px, transparent 50%)"
+            },
+            "minimal-light": {
+                "--bg-base": "#f4f0ec",
+                "--bg-surface": "rgba(255, 255, 255, 0.65)",
+                "--bg-card": "rgba(230, 225, 218, 0.45)",
+                "--accent-cyan": "#8b7355",
+                "--accent-violet": "#a89f91",
+                "--border-glow": "rgba(139, 115, 85, 0.15)",
+                "--border-soft": "rgba(0, 0, 0, 0.08)",
+                "--text-main": "#2a2522",
+                "--text-muted": "#70655c",
+                "bg-gradient": "radial-gradient(at 0% 0%, rgba(200, 190, 175, 0.2) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(139, 115, 85, 0.1) 0px, transparent 50%)"
+            },
+            "deep-purple": {
+                "--bg-base": "#0f0314",
+                "--bg-surface": "rgba(30, 0, 50, 0.55)",
+                "--bg-card": "rgba(50, 10, 80, 0.35)",
+                "--accent-cyan": "#b464ff",
+                "--accent-violet": "#da70d6",
+                "--border-glow": "rgba(180, 100, 255, 0.2)",
+                "--border-soft": "rgba(255, 255, 255, 0.08)",
+                "--text-main": "#f0e6ff",
+                "--text-muted": "#c0a8e0",
+                "bg-gradient": "radial-gradient(at 0% 0%, rgba(180, 100, 255, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(218, 112, 214, 0.1) 0px, transparent 50%)"
+            },
+            "cybertron": {
+                "--bg-base": "#000a12",
+                "--bg-surface": "rgba(0, 20, 40, 0.6)",
+                "--bg-card": "rgba(0, 35, 70, 0.45)",
+                "--accent-cyan": "#00c8ff",
+                "--accent-violet": "#0055ff",
+                "--border-glow": "rgba(0, 200, 255, 0.2)",
+                "--border-soft": "rgba(255, 255, 255, 0.08)",
+                "--text-main": "#e0f7fa",
+                "--text-muted": "#80a8c0",
+                "bg-gradient": "radial-gradient(at 0% 0%, rgba(0, 200, 255, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(0, 85, 255, 0.1) 0px, transparent 50%)"
+            },
+            "midnight-navy": {
+                "--bg-base": "#080c18",
+                "--bg-surface": "rgba(15, 25, 50, 0.6)",
+                "--bg-card": "rgba(25, 40, 80, 0.4)",
+                "--accent-cyan": "#6495ed",
+                "--accent-violet": "#4169e1",
+                "--border-glow": "rgba(100, 149, 237, 0.2)",
+                "--border-soft": "rgba(255, 255, 255, 0.08)",
+                "--text-main": "#e8eaf6",
+                "--text-muted": "#9fa8da",
+                "bg-gradient": "radial-gradient(at 0% 0%, rgba(100, 149, 237, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(65, 105, 225, 0.1) 0px, transparent 50%)"
+            },
+            "forest-sage": {
+                "--bg-base": "#0b140e",
+                "--bg-surface": "rgba(30, 50, 35, 0.55)",
+                "--bg-card": "rgba(45, 75, 52, 0.4)",
+                "--accent-cyan": "#81c784",
+                "--accent-violet": "#4caf50",
+                "--border-glow": "rgba(129, 199, 132, 0.2)",
+                "--border-soft": "rgba(255, 255, 255, 0.08)",
+                "--text-main": "#f1f8e9",
+                "--text-muted": "#a5d6a7",
+                "bg-gradient": "radial-gradient(at 0% 0%, rgba(129, 199, 132, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(76, 175, 80, 0.1) 0px, transparent 50%)"
+            },
+            "solar-gold": {
+                "--bg-base": "#140f07",
+                "--bg-surface": "rgba(30, 20, 5, 0.6)",
+                "--bg-card": "rgba(50, 35, 10, 0.4)",
+                "--accent-cyan": "#ffd700",
+                "--accent-violet": "#ff8c00",
+                "--border-glow": "rgba(255, 215, 0, 0.2)",
+                "--border-soft": "rgba(255, 255, 255, 0.08)",
+                "--text-main": "#fff8e1",
+                "--text-muted": "#ffe082",
+                "bg-gradient": "radial-gradient(at 0% 0%, rgba(255, 215, 0, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(255, 140, 0, 0.1) 0px, transparent 50%)"
+            }
+        };
+
+        function changeTheme(themeName) {
+            const theme = themes[themeName] || themes["cyber-dark"];
+            const rootEl = document.documentElement;
+            for (const [key, value] of Object.entries(theme)) {
+                if (key !== "bg-gradient") {
+                    rootEl.style.setProperty(key, value);
+                }
+            }
+            document.body.style.backgroundImage = theme["bg-gradient"];
+            localStorage.setItem("chronos-theme", themeName);
+            const selectEl = document.getElementById("themeSelect");
+            if (selectEl) {
+                selectEl.value = themeName;
+            }
+        }
+
+        let activeSessionId = "default";
+
+        async function loadSessions() {
+            try {
+                const res = await fetch('/api/sessions');
+                const sessions = await res.json();
+                const container = document.getElementById('sessionsList');
+                container.innerHTML = '';
+
+                if (sessions.length === 0) {
+                    container.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 10px;">No saved sessions</div>';
+                    return;
+                }
+
+                sessions.forEach(s => {
+                    const item = document.createElement('div');
+                    item.className = `session-item ${s.id === activeSessionId ? 'active' : ''}`;
+                    item.onclick = (e) => {
+                        if (e.target.classList.contains('session-delete')) return;
+                        selectSession(s.id);
+                    };
+
+                    item.innerHTML = `
+                        <span class="session-title">${s.title}</span>
+                        <span class="session-delete" onclick="deleteSession('${s.id}')">×</span>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch(e) {
+                console.error("Error loading sessions", e);
+            }
+        }
+
+        async function createNewSession() {
+            try {
+                const res = await fetch('/api/sessions/create', { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    activeSessionId = data.id;
+                    document.getElementById('chatWindow').innerHTML = '';
+                    await loadSessions();
+                    appendMessage('System', 'New conversation started.');
+                }
+            } catch(e) {
+                console.error("Error creating session", e);
+            }
+        }
+
+        async function selectSession(sid) {
+            try {
+                const res = await fetch('/api/sessions/load', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id: sid})
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    activeSessionId = sid;
+                    const chatWin = document.getElementById('chatWindow');
+                    chatWin.innerHTML = '';
+                    
+                    // Render message history
+                    data.messages.forEach(m => {
+                        if (m.role === 'user') {
+                            appendMessage('User', m.content, true);
+                        } else if (m.role === 'assistant') {
+                            if (m.tool_calls) {
+                                m.tool_calls.forEach(tc => {
+                                    renderStep(tc.function.name, JSON.stringify(tc.function.arguments));
+                                });
+                            }
+                            if (m.content) {
+                                appendMessage('Chronos', m.content);
+                            }
+                        } else if (m.role === 'tool') {
+                            renderStepResult('Tool', m.content);
+                        }
+                    });
+                    
+                    await loadSessions();
+                }
+            } catch(e) {
+                console.error("Error loading session", e);
+            }
+        }
+
+        async function deleteSession(sid) {
+            if (!confirm("Are you sure you want to delete this session?")) return;
+            try {
+                const res = await fetch('/api/sessions/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id: sid})
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    if (activeSessionId === sid) {
+                        await createNewSession();
+                    } else {
+                        await loadSessions();
+                    }
+                }
+            } catch(e) {
+                console.error("Error deleting session", e);
+            }
+        }
+
+        async function init() {
+            const savedTheme = localStorage.getItem("chronos-theme") || "cyber-dark";
+            changeTheme(savedTheme);
+
+            await loadStatus();
+            await loadTools();
+            await loadSessions();
+            // Start polling status occasionally to refresh connection indicators
+            setInterval(loadStatus, 5000);
+        }
+
+        async function loadStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                
+                document.getElementById('providerSelect').value = data.provider;
+                document.getElementById('modelInput').value = data.model;
+                document.getElementById('activeModelHeader').innerText = data.model + " (" + data.provider.toUpperCase() + ")";
+                document.getElementById('autoApproveToggle').checked = data.auto_approve_tools;
+                document.getElementById('compactionToggle').checked = data.compaction_enabled;
+                document.getElementById('selfReflectionToggle').checked = data.self_reflection || false;
+                
+                if (data.provider === 'llamacpp') {
+                    document.getElementById('restartServerGroup').style.display = 'block';
+                } else {
+                    document.getElementById('restartServerGroup').style.display = 'none';
+                }
+                
+                const conn = document.getElementById('connStatus');
+                if (data.connected) {
+                    conn.innerText = "Connected";
+                    conn.style.color = "var(--accent-green)";
+                } else {
+                    conn.innerText = "Disconnected";
+                    conn.style.color = "red";
+                }
+
+                // Render telemetry if available
+                if (data.telemetry && data.telemetry.ram_total > 0) {
+                    document.getElementById('ramStatusItem').style.display = 'flex';
+                    document.getElementById('ramStatus').innerText = `${data.telemetry.ram_load}% (${data.telemetry.ram_used} GB / ${data.telemetry.ram_total} GB)`;
+                    
+                    if (data.telemetry.server_memory_mb > 0) {
+                        document.getElementById('serverMemStatusItem').style.display = 'flex';
+                        document.getElementById('serverMemStatus').innerText = `${data.telemetry.server_memory_mb} MB`;
+                    } else {
+                        document.getElementById('serverMemStatusItem').style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('ramStatusItem').style.display = 'none';
+                    document.getElementById('serverMemStatusItem').style.display = 'none';
+                }
+            } catch(e) {
+                console.error("Error loading status", e);
+            }
+        }
+
+        async function loadTools() {
+            try {
+                const res = await fetch('/api/tools');
+                const tools = await res.json();
+                const container = document.getElementById('toolsList');
+                container.innerHTML = '';
+                
+                tools.forEach(t => {
+                    const item = document.createElement('div');
+                    item.className = 'tool-item';
+                    
+                    const tagClass = t.requires_permission ? 'ask' : 'auto';
+                    const tagLabel = t.requires_permission ? 'Ask' : 'Auto';
+                    
+                    item.innerHTML = `
+                        <span class="tool-name">${t.name}</span>
+                        <span class="tool-tag ${tagClass}">${tagLabel}</span>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch(e) {
+                console.error("Error loading tools", e);
+            }
+        }
+
+        async function updateProvider() {
+            const provider = document.getElementById('providerSelect').value;
+            await updateConfig('provider', provider);
+            await loadStatus();
+        }
+
+        async function updateConfig(key, value) {
+            try {
+                await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({key, value})
+                });
+            } catch(e) {
+                console.error("Error updating config", e);
+            }
+        }
+
+        async function clearHistory() {
+            try {
+                await fetch('/api/clear', {method: 'POST'});
+                document.getElementById('chatWindow').innerHTML = '';
+            } catch(e) {
+                console.error("Error clearing history", e);
+            }
+        }
+
+        // Simple Markdown style renderer helper
+        function renderMarkdown(text) {
+            if (!text) return '';
+            let html = text
+                // Code blocks
+                .replace(/```(\\w*)\\n([\\s\\S]*?)\\n```/g, (match, lang, code) => {
+                    return `<pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>`;
+                })
+                // Inline code
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                // Bold
+                .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
+                // Newlines
+                .replace(/\\n/g, '<br>');
+            return html;
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function appendMessage(sender, text, isUser = false) {
+            const window = document.getElementById('chatWindow');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+            
+            const senderTag = document.createElement('span');
+            senderTag.className = 'sender-tag';
+            senderTag.innerText = sender;
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.innerHTML = isUser ? escapeHtml(text) : renderMarkdown(text);
+            
+            messageDiv.appendChild(senderTag);
+            messageDiv.appendChild(bubble);
+            window.appendChild(messageDiv);
+            
+            window.scrollTop = window.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const window = document.getElementById('chatWindow');
+            let loaderDiv = document.getElementById('typingIndicator');
+            if (!loaderDiv) {
+                loaderDiv = document.createElement('div');
+                loaderDiv.id = 'typingIndicator';
+                loaderDiv.className = 'typing-indicator';
+                window.appendChild(loaderDiv);
+            }
+            loaderDiv.innerHTML = '<span class="status-text">Thinking...</span><span></span><span></span><span></span>';
+            window.scrollTop = window.scrollHeight;
+        }
+
+        function updateTypingIndicatorStatus(status) {
+            showTypingIndicator();
+            const el = document.querySelector('#typingIndicator .status-text');
+            if (el) {
+                el.innerText = status;
+            }
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('typingIndicator');
+            if (el) el.remove();
+        }
+
+        function renderStepResult(toolName, result) {
+            const window = document.getElementById('chatWindow');
+            const container = document.createElement('div');
+            container.className = 'step-container';
+            container.style.opacity = '0.85';
+            
+            const label = document.createElement('span');
+            label.className = 'step-thought';
+            label.style.color = 'var(--text-muted)';
+            label.innerText = `Observation from ${toolName}:`;
+            
+            const resText = document.createElement('pre');
+            resText.className = 'step-action';
+            resText.style.fontSize = '11px';
+            resText.style.background = 'rgba(255, 255, 255, 0.03)';
+            resText.style.padding = '4px 8px';
+            resText.style.borderRadius = '4px';
+            resText.style.whiteSpace = 'pre-wrap';
+            resText.style.wordBreak = 'break-all';
+            resText.innerText = result.length > 300 ? result.substring(0, 300) + "..." : result;
+            
+            container.appendChild(label);
+            container.appendChild(resText);
+            window.appendChild(container);
+            window.scrollTop = window.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || isGenerating) return;
+            
+            input.value = '';
+            appendMessage('User', text, true);
+            showTypingIndicator();
+            
+            isGenerating = true;
+            
+            // Create placeholders for the upcoming assistant response
+            const window = document.getElementById('chatWindow');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant';
+            
+            const senderTag = document.createElement('span');
+            senderTag.className = 'sender-tag';
+            senderTag.innerText = 'Chronos';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            
+            messageDiv.appendChild(senderTag);
+            messageDiv.appendChild(bubble);
+            
+            let assistantText = "";
+            let addedBubble = false;
+
+            try {
+                const response = await fetch('/api/chat/stream', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: text})
+                });
+
+                if (!response.ok) {
+                    throw new Error("HTTP error: " + response.status);
+                }
+
+                removeTypingIndicator();
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split("\n");
+                    buffer = lines.pop(); // save trailing partial line
+
+                    for (const line of lines) {
+                        if (line.startsWith("data: ")) {
+                            const dataStr = line.slice(6).trim();
+                            if (dataStr === "[DONE]") continue;
+
+                            try {
+                                const event = JSON.parse(dataStr);
+                                
+                                if (event.type === 'status') {
+                                    updateTypingIndicatorStatus(event.content);
+                                } 
+                                else if (event.type === 'token') {
+                                    removeTypingIndicator();
+                                    if (!addedBubble) {
+                                        window.appendChild(messageDiv);
+                                        addedBubble = true;
+                                    }
+                                    assistantText += event.content;
+                                    bubble.innerHTML = renderMarkdown(assistantText);
+                                    window.scrollTop = window.scrollHeight;
+                                }
+                                else if (event.type === 'agent_switch') {
+                                    const swarmList = document.getElementById('swarmStatusList');
+                                    if (swarmList.innerHTML.includes("No active swarm")) swarmList.innerHTML = '';
+                                    
+                                    const div = document.createElement('div');
+                                    div.className = 'swarm-item';
+                                    div.innerHTML = `🤖 <span class="swarm-agent">${event.agent}</span> is now active...<br><span style="color:var(--text-muted); font-size:11px;">${event.task || ''}</span>`;
+                                    swarmList.appendChild(div);
+                                    switchRightTab('swarm');
+                                    appendMessage("system", `🤖 Switched to agent: **${event.agent}**`);
+                                }
+                                else if (event.type === 'tool_calls') {
+                                    removeTypingIndicator();
+                                    event.content.forEach(tc => {
+                                        renderStep(tc.function.name, JSON.stringify(tc.function.arguments));
+                                    });
+                                }
+                                else if (event.type === 'tool_result') {
+                                    renderStepResult(event.name, event.result);
+                                }
+                                else if (event.type === 'error') {
+                                    removeTypingIndicator();
+                                    appendMessage('System Error', event.content);
+                                }
+                                else if (event.type === 'done') {
+                                    loadSessions();
+                                }
+                                else if (event.type === 'permission_required') {
+                                    removeTypingIndicator();
+                                    handlePermissionRequired(event.req_id, event.tool, event.desc, event.diff);
+                                }
+                                else if (event.type === 'user_prompt_required') {
+                                    removeTypingIndicator();
+                                    handleUserPrompt(event.req_id, event.question);
+                                }
+                            } catch (e) {
+                                console.error("Error parsing SSE data", e, dataStr);
+                            }
+                        }
+                    }
+                }
+            } catch(e) {
+                removeTypingIndicator();
+                appendMessage('System Error', e.message || 'Server connection failure');
+            } finally {
+                isGenerating = false;
+            }
+        }
+
+        function findLastIndex(array, predicate) {
+            for (let i = array.length - 1; i >= 0; i--) {
+                if (predicate(array[i])) return i;
+            }
+            return -1;
+        }
+
+        function renderStep(toolName, args) {
+            const window = document.getElementById('chatWindow');
+            const container = document.createElement('div');
+            container.className = 'step-container';
+            
+            const thought = document.createElement('span');
+            thought.className = 'step-thought';
+            thought.innerText = "Agent invoking tool capability...";
+            
+            const action = document.createElement('span');
+            action.className = 'step-action';
+            action.innerText = `→ ${toolName}(${args})`;
+            
+            container.appendChild(thought);
+            container.appendChild(action);
+            window.appendChild(container);
+            window.scrollTop = window.scrollHeight;
+        }
+
+        // 🗂️ Right Panel Tabs 🗂️
+        function switchRightTab(tab) {
+            const tabs = ['tools', 'workspace', 'git', 'swarm', 'mcp'];
+            tabs.forEach(t => {
+                const contentId = `${t}TabContent`;
+                const tabId = `tab${t.charAt(0).toUpperCase() + t.slice(1)}`;
+                
+                const contentEl = document.getElementById(contentId);
+                const tabEl = document.getElementById(tabId);
+                
+                if (contentEl) contentEl.style.display = t === tab ? 'flex' : 'none';
+                if (tabEl) tabEl.className = t === tab ? 'active-tab' : 'inactive-tab';
+            });
+            if (tab === 'workspace') loadWorkspaceTree();
+            if (tab === 'git') loadGitStatus();
+            if (tab === 'mcp') loadMCPRegistry();
+        }
+        
+        async function loadMCPRegistry() {
+            try {
+                const res = await fetch('/api/mcp/list');
+                const data = await res.json();
+                const container = document.getElementById('mcpRegistryList');
+                container.innerHTML = '';
+                
+                if (data.status === 'success') {
+                    data.servers.forEach(server => {
+                        const div = document.createElement('div');
+                        div.style = 'background: rgba(0,0,0,0.3); border: 1px solid var(--border-soft); padding: 8px; border-radius: 8px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;';
+                        
+                        const left = document.createElement('div');
+                        left.innerHTML = `<div style="color: var(--accent-cyan); font-weight: bold; font-size: 13px;">${server.name}</div>
+                                          <div style="font-size: 11px; color: var(--text-muted);">${server.command} ${server.args.join(' ')}</div>`;
+                        
+                        const right = document.createElement('div');
+                        if (server.connected) {
+                            right.innerHTML = `<span style="color: var(--accent-green); font-size: 11px; padding: 4px 8px; background: rgba(57, 255, 20, 0.1); border-radius: 4px;">Connected</span>`;
+                        } else {
+                            const btn = document.createElement('button');
+                            btn.className = 'btn-glow';
+                            btn.style = 'padding: 4px 8px; font-size: 11px; border-radius: 4px; margin: 0; cursor: pointer;';
+                            btn.innerText = 'Connect';
+                            btn.onclick = () => connectMCP(server.name, btn);
+                            right.appendChild(btn);
+                        }
+                        
+                        div.appendChild(left);
+                        div.appendChild(right);
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = `<div style="color: red; font-size: 12px;">Error: ${data.error}</div>`;
+                }
+            } catch(e) {
+                console.error("Failed to load MCP registry", e);
+            }
+        }
+        
+        async function connectMCP(name, btn) {
+            btn.innerText = '⏳ Connecting...';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/mcp/connect', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: name})
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert(`Connected to ${name}. Loaded ${data.tools_count} tools.`);
+                    loadMCPRegistry();
+                } else {
+                    alert('Error: ' + data.error);
+                    btn.innerText = 'Connect';
+                    btn.disabled = false;
+                }
+            } catch(e) {
+                alert('Connection error: ' + e.message);
+                btn.innerText = 'Connect';
+                btn.disabled = false;
+            }
+        }
+
+        // ─── Workspace Explorer ──────────────────────────────────────
+        async function loadWorkspaceTree() {
+            try {
+                const res  = await fetch('/api/workspace/tree');
+                const items = await res.json();
+                const container = document.getElementById('workspaceTree');
+                container.innerHTML = '';
+
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = `workspace-item ${item.type === 'directory' ? 'workspace-dir' : 'workspace-file'}`;
+                    const indent = (item.path.split('/').length - 1) * 14;
+                    div.style.paddingLeft = `${indent + 6}px`;
+                    div.innerHTML = `${item.type === 'directory' ? '📁' : '📄'} ${item.name}`;
+                    if (item.type === 'file') {
+                        div.onclick = () => openWorkspaceFile(item.path);
+                    }
+                    container.appendChild(div);
+                });
+            } catch(e) {
+                console.error('Error loading workspace tree', e);
+            }
+        }
+
+        async function openWorkspaceFile(path) {
+            try {
+                const res = await fetch(`/api/workspace/file?path=${encodeURIComponent(path)}`);
+                if (!res.ok) { alert('Cannot open file: ' + res.status); return; }
+                const content = await res.text();
+                
+                document.getElementById('filePreviewTitle').innerText = path;
+                document.getElementById('filePreviewContent').innerText = content;
+                document.getElementById('filePreviewModal').style.display = 'flex';
+            } catch(e) {
+                alert('Error reading file: ' + e.message);
+            }
+        }
+
+        // 🗂️ Git Operations 🗂️
+        async function loadGitStatus() {
+            try {
+                const res = await fetch('/api/git/status');
+                const data = await res.json();
+                const container = document.getElementById('gitStatusList');
+                container.innerHTML = '';
+                
+                if (!data.is_repo) {
+                    container.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 10px;">Not a git repository</div>';
+                    return;
+                }
+                
+                if (data.files.length === 0) {
+                    container.innerHTML = '<div style="color: var(--accent-green); font-size: 12px; text-align: center; padding: 10px;">Working tree clean</div>';
+                    return;
+                }
+                
+                data.files.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'git-item';
+                    div.innerHTML = `<span class="git-state">${file.state}</span><span>${file.path}</span>`;
+                    container.appendChild(div);
+                });
+            } catch (e) {
+                console.error("Failed to load git status", e);
+            }
+        }
+
+        async function suggestCommitMessage() {
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Generating...';
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch('/api/git/suggest', { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    document.getElementById('gitCommitMessage').value = data.message;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function commitChanges() {
+            const msg = document.getElementById('gitCommitMessage').value.trim();
+            if (!msg) { alert('Commit message cannot be empty'); return; }
+            
+            try {
+                const res = await fetch('/api/git/commit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: msg})
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    document.getElementById('gitCommitMessage').value = '';
+                    loadGitStatus();
+                } else {
+                    alert('Commit failed: ' + data.error);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    </script>
+
+    <!-- Permission Request Modal -->
+    <div id="permissionModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass">
+            <h3 style="margin-top: 0; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;">
+                ⚠️ Tool Execution Permission
+            </h3>
+            <p style="font-size: 14px; margin-bottom: 8px;">The agent requests permission to execute a tool:</p>
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-soft); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 13px; word-break: break-all; margin-bottom: 15px;">
+                <strong id="permToolName" style="color: var(--text-main);">tool_name</strong>
+                <div id="permToolDesc" style="margin-top: 6px; color: var(--text-muted); white-space: pre-wrap;">description</div>
+            </div>
+            
+            <div id="permDiffContainer" style="display: none; margin-bottom: 15px; border: 1px solid var(--border-soft); border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.5); max-height: 40vh; overflow-y: auto;">
+                <!-- Diff2Html output goes here -->
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn-glow" onclick="submitPermission('y')" style="padding: 10px; margin-top: 0; cursor: pointer;">Yes, allow once</button>
+                <button class="btn-glow" onclick="submitPermission('ya')" style="padding: 10px; margin-top: 0; cursor: pointer; background: rgba(57, 255, 20, 0.1); border-color: var(--accent-green); color: var(--accent-green);">Yes to all (this session)</button>
+                <button class="btn-glow" onclick="submitPermission('yw')" style="padding: 10px; margin-top: 0; cursor: pointer; background: rgba(139, 92, 246, 0.1); border-color: #8b5cf6; color: #a78bfa;">Trust workspace permanently</button>
+                <button class="btn-glow" onclick="submitPermission('n')" style="padding: 10px; margin-top: 0; cursor: pointer; background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #f87171;">No, deny execution</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Prompt Modal -->
+    <div id="promptModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(8px);">
+        <div class="glass-panel" style="width: 500px; max-width: 90%; padding: 30px; text-align: center;">
+            <div style="font-size: 40px; margin-bottom: 15px;">🙋‍♂️</div>
+            <h2 style="margin: 0 0 10px 0; color: var(--accent-magenta);">Agent Needs Input</h2>
+            <p style="color: var(--text-muted); margin-bottom: 25px;">The autonomous agent has paused and requires your input to proceed.</p>
+            
+            <div style="text-align: left; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px solid var(--border-soft); margin-bottom: 25px;">
+                <div style="font-size: 12px; color: var(--accent-cyan); text-transform: uppercase; font-weight: 700; margin-bottom: 5px;">Question:</div>
+                <div id="promptQuestionText" style="font-family: var(--font-mono); font-size: 14px; color: #fff;"></div>
+            </div>
+
+            <textarea id="promptInputText" rows="3" class="chat-input" style="width: 100%; border-radius: 8px; padding: 12px; margin-bottom: 20px; resize: vertical;" placeholder="Type your answer here..."></textarea>
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-glow" onclick="submitPrompt()" style="flex: 1; padding: 12px; cursor: pointer;">Submit Answer</button>
+                <button class="btn-glow" onclick="submitPrompt('')" style="padding: 12px; cursor: pointer; background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #f87171;">Skip / Empty</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let activePermissionReqId = null;
+
+        function handlePermissionRequired(reqId, tool, desc, diffText = null) {
+            activePermissionReqId = reqId;
+            document.getElementById('permToolName').innerText = tool;
+            document.getElementById('permToolDesc').innerText = desc;
+            
+            const diffContainer = document.getElementById('permDiffContainer');
+            if (diffText) {
+                try {
+                    const diffHtml = Diff2Html.html(diffText, {
+                        drawFileList: false,
+                        matching: 'lines',
+                        outputFormat: 'side-by-side',
+                        colorScheme: 'dark'
+                    });
+                    diffContainer.innerHTML = diffHtml;
+                    diffContainer.style.display = 'block';
+                } catch(e) {
+                    diffContainer.innerHTML = `<pre style="color: #fff; font-size: 11px;">${diffText}</pre>`;
+                    diffContainer.style.display = 'block';
+                }
+            } else {
+                diffContainer.style.display = 'none';
+                diffContainer.innerHTML = '';
+            }
+            
+            document.getElementById('permissionModal').style.display = 'flex';
+        }
+
+        async function submitPermission(choice) {
+            if (!activePermissionReqId) return;
+            
+            document.getElementById('permissionModal').style.display = 'none';
+            const reqId = activePermissionReqId;
+            activePermissionReqId = null;
+            
+            try {
+                await fetch('/api/chat/permission', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({req_id: reqId, choice: choice})
+                });
+            } catch (e) {
+                console.error("Error submitting permission", e);
+            }
+        }
+
+        let activePromptReqId = null;
+
+        function handleUserPrompt(reqId, question) {
+            activePromptReqId = reqId;
+            document.getElementById('promptQuestionText').innerText = question;
+            document.getElementById('promptInputText').value = "";
+            document.getElementById('promptModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('promptInputText').focus(), 100);
+        }
+
+        async function submitPrompt(overrideValue = null) {
+            if (!activePromptReqId) return;
+            
+            const reqId = activePromptReqId;
+            const answer = overrideValue !== null ? overrideValue : document.getElementById('promptInputText').value;
+            
+            activePromptReqId = null;
+            document.getElementById('promptModal').style.display = 'none';
+            
+            try {
+                await fetch('/api/chat/prompt', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({req_id: reqId, answer: answer})
+                });
+            } catch (e) {
+                console.error("Failed to submit prompt", e);
+            }
+        }
+
+        async function restartGGUFServer() {
+            if (!confirm("Are you sure you want to restart the local GGUF server? This may take several seconds.")) return;
+            
+            const btn = document.querySelector('#restartServerGroup button');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ Restarting...";
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch('/api/server/restart', { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert("GGUF Server restarted successfully!");
+                } else {
+                    alert("Error restarting server: " + data.error);
+                }
+            } catch(e) {
+                alert("Connection failed: " + e.message);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                await loadStatus();
+            }
+        }
+
+        async function loadLogs() {
+            document.getElementById('logsModal').style.display = 'flex';
+            document.getElementById('logsContent').innerText = 'Loading...';
+            try {
+                const res = await fetch('/api/logs');
+                const data = await res.json();
+                const combined = [
+                    '─── chronos.log (last 50 lines) ─────────────────────────────────',
+                    ...(data.chronos || ['(no log found)']),
+                    '',
+                    '─── llama_server.log (last 50 lines) ────────────────────────────',
+                    ...(data.server || ['(no log found)'])
+                ].join('\n');
+                document.getElementById('logsContent').innerText = combined;
+                const el = document.getElementById('logsContent');
+                el.scrollTop = el.scrollHeight;
+            } catch(e) {
+                document.getElementById('logsContent').innerText = 'Error: ' + e.message;
+            }
+        }
+
+        window.onload = init;
+    </script>
+
+    <!-- File Preview Modal -->
+    <div id="filePreviewModal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
+        <div class="modal-content" style="max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h3 style="margin: 0; color: var(--accent-cyan); font-size: 14px; word-break: break-all;" id="filePreviewTitle">filename</h3>
+                <button onclick="document.getElementById('filePreviewModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px;">✕</button>
+            </div>
+            <pre id="filePreviewContent" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border-soft); border-radius: 8px; padding: 14px; font-family: 'Courier New', monospace; font-size: 12px; color: var(--text-main); white-space: pre-wrap; word-break: break-word; max-height: 60vh;"></pre>
+        </div>
+    </div>
+
+    <!-- Live Logs Modal -->
+    <div id="logsModal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) this.style.display='none'">
+        <div class="modal-content" style="max-width: 800px; max-height: 85vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <h3 style="margin: 0; color: var(--accent-cyan);">📋 Live Log Console</h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button onclick="loadLogs()" style="background: none; border: 1px solid var(--border-soft); color: var(--text-muted); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">🔄 Refresh</button>
+                    <button onclick="document.getElementById('logsModal').style.display='none'" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px;">✕</button>
+                </div>
+            </div>
+            <pre id="logsContent" style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.45); border: 1px solid var(--border-soft); border-radius: 8px; padding: 14px; font-family: 'Courier New', monospace; font-size: 11px; color: #a3e8a0; white-space: pre-wrap; word-break: break-word; max-height: 70vh;"></pre>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,69 @@
+# version is obsolete in newer docker compose versions
+
+services:
+  chronos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chronos_app
+    restart: unless-stopped
+    depends_on:
+      - chromadb
+      # - ollama (disabled because we are using host.docker.internal Windows Ollama)
+    environment:
+      # These environment variables configure where Chronos should look for services
+      - CHROMADB_URL=http://chromadb:8000
+      - OLLAMA_URL=http://ollama:11434
+    volumes:
+      # Mount local directory to container for fast iteration in dev (optional)
+      - ./:/app
+      # Map a local folder to the container's config directory for persistent settings
+      - ./docker-config:/home/appuser/.chatty-chronos
+    ports:
+      - "8080:8080" # Map to standard app port if needed
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: chronos_chromadb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+#   ollama:
+#     image: ollama/ollama:latest
+#     container_name: chronos_ollama
+#     restart: unless-stopped
+#     ports:
+#       - "11434:11434"
+#     volumes:
+#       - ollama_data:/root/.ollama
+    # Ollama requires a GPU for good performance, but falls back to CPU.
+    # To enable GPU, you might need to uncomment the following block and configure docker host:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  llama-server:
+    image: ghcr.io/ggerganov/llama.cpp:server
+    container_name: chronos_llama_server
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    # This service is marked with a profile so it won't start by default.
+    # To run it, use: docker-compose --profile optional up -d
+    profiles:
+      - optional
+    volumes:
+      - llama_models:/models
+    command: -m /models/your-model.gguf --host 0.0.0.0 --port 8080
+
+volumes:
+  chroma_data:
+  ollama_data:
+  llama_models:

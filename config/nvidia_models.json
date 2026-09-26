@@ -1,0 +1,531 @@
+{
+  "providers": [
+    {
+      "name": "nvidia",
+      "type": "nvidia_nim",
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "env_key": "NVIDIA_API_KEY",
+      "models": [
+        {
+          "id": "nvidia/nemotron-3-ultra-550b-a55b",
+          "label": "Nemotron Ultra 550B",
+          "description": "1M context, reasoning, coding, tool calling",
+          "stream_parser": "reasoning",
+          "default_params": {
+            "temperature": 1,
+            "top_p": 0.95,
+            "max_tokens": 16384,
+            "extra_body": {
+              "chat_template_kwargs": {
+                "enable_thinking": true
+              },
+              "reasoning_budget": 16384
+            }
+          }
+        },
+        {
+          "id": "nvidia/nemotron-3-super-120b-a12b",
+          "label": "Nemotron Super 120B",
+          "description": "Hybrid Mamba-Transformer MoE, 1M context, reasoning",
+          "stream_parser": "reasoning",
+          "default_params": {
+            "temperature": 1,
+            "top_p": 0.95,
+            "max_tokens": 16384,
+            "extra_body": {
+              "chat_template_kwargs": {
+                "enable_thinking": true
+              },
+              "reasoning_budget": 16384
+            }
+          }
+        },
+        {
+          "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+          "label": "Nemotron Nano Omni 30B",
+          "description": "Omni-modal reasoning: images, video, speech, text",
+          "stream_parser": "reasoning",
+          "features": [
+            "multimodal",
+            "vision",
+            "audio"
+          ],
+          "default_params": {
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "max_tokens": 65536,
+            "extra_body": {
+              "chat_template_kwargs": {
+                "enable_thinking": true
+              },
+              "reasoning_budget": 16384
+            }
+          }
+        },
+        {
+          "id": "nvidia/llama-3.3-nemotron-super-49b-v1",
+          "label": "Llama 3.3 Nemotron Super 49B",
+          "description": "High efficiency: reasoning, tool calling, chat, math",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "max_tokens": 4096,
+            "frequency_penalty": 0,
+            "presence_penalty": 0
+          }
+        },
+        {
+          "id": "deepseek-ai/deepseek-v4-flash",
+          "label": "DeepSeek V4 Flash",
+          "description": "284B MoE, 1M context, fast coding & agents",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 1,
+            "top_p": 0.95,
+            "max_tokens": 16384,
+            "extra_body": {
+              "chat_template_kwargs": {
+                "thinking": true,
+                "reasoning_effort": "high"
+              }
+            }
+          }
+        },
+        {
+          "id": "deepseek-ai/deepseek-v4-pro",
+          "label": "DeepSeek V4 Pro",
+          "description": "1M context MoE, efficient coding tasks",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 1,
+            "top_p": 0.95,
+            "max_tokens": 16384,
+            "extra_body": {
+              "chat_template_kwargs": {
+                "thinking": false
+              }
+            }
+          }
+        },
+        {
+          "id": "openai/gpt-oss-20b",
+          "label": "GPT-OSS 20B",
+          "description": "Small MoE text-only: reasoning & math",
+          "stream_parser": "reasoning",
+          "default_params": {
+            "temperature": 1,
+            "top_p": 1,
+            "max_tokens": 4096
+          }
+        },
+        {
+          "id": "openai/gpt-oss-120b",
+          "label": "GPT-OSS 120B",
+          "description": "MoE reasoning LLM, fits 80GB GPU",
+          "stream_parser": "reasoning",
+          "default_params": {
+            "temperature": 1,
+            "top_p": 1,
+            "max_tokens": 4096
+          }
+        },
+        {
+          "id": "mistralai/mistral-nemotron",
+          "label": "Mistral Nemotron",
+          "description": "Agentic workflows: coding, instruction following",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.6,
+            "top_p": 0.7,
+            "max_tokens": 4096
+          }
+        },
+        {
+          "id": "mistralai/mistral-medium-3.5-128b",
+          "label": "Mistral Medium 3.5 128B",
+          "description": "High performance: text generation, coding, agentic",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.7,
+            "top_p": 1.0,
+            "max_tokens": 16384,
+            "reasoning_effort": "high"
+          }
+        },
+        {
+          "id": "mistralai/mistral-small-4-119b-2603",
+          "label": "Mistral Small 4 119B",
+          "description": "Hybrid MoE: instruct, reasoning, coding, multimodal",
+          "stream_parser": "standard",
+          "features": [
+            "multimodal",
+            "vision"
+          ],
+          "default_params": {
+            "temperature": 0.1,
+            "top_p": 1.0,
+            "max_tokens": 16384,
+            "reasoning_effort": "high"
+          }
+        },
+        {
+          "id": "mistralai/mistral-large-3-675b-instruct-2512",
+          "label": "Mistral Large 3 675B",
+          "description": "State-of-the-art MoE VLM: chat, agentic, multimodal",
+          "stream_parser": "standard",
+          "features": [
+            "multimodal",
+            "vision"
+          ],
+          "default_params": {
+            "temperature": 0.15,
+            "top_p": 1.0,
+            "max_tokens": 2048,
+            "frequency_penalty": 0.0,
+            "presence_penalty": 0.0
+          }
+        },
+        {
+          "id": "mistralai/ministral-14b-instruct-2512",
+          "label": "Ministral 14B",
+          "description": "General purpose VLM: chat, instruction",
+          "stream_parser": "standard",
+          "features": [
+            "multimodal",
+            "vision"
+          ],
+          "default_params": {
+            "temperature": 0.15,
+            "top_p": 1.0,
+            "max_tokens": 2048,
+            "frequency_penalty": 0.0,
+            "presence_penalty": 0.0
+          }
+        },
+        {
+          "id": "mistralai/mixtral-8x22b-instruct-v0.1",
+          "label": "Mixtral 8x22B Instruct",
+          "description": "MoE instruct, large context",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.7,
+            "max_tokens": 4096
+          }
+        },
+        {
+          "id": "mistralai/mixtral-8x7b-instruct-v0.1",
+          "label": "Mixtral 8x7B Instruct",
+          "description": "MoE LLM: instructions, creative text",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.5,
+            "top_p": 1,
+            "max_tokens": 1024
+          }
+        },
+        {
+          "id": "meta/llama-3.3-70b-instruct",
+          "label": "Llama 3.3 70B",
+          "description": "Advanced LLM: reasoning, math, code, function calling",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.2,
+            "top_p": 0.7,
+            "max_tokens": 1024
+          }
+        },
+        {
+          "id": "meta/llama-3.1-70b-instruct",
+          "label": "Llama 3.1 70B",
+          "description": "Complex conversations, reasoning, text generation",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.2,
+            "top_p": 0.7,
+            "max_tokens": 1024
+          }
+        },
+        {
+          "id": "meta/llama3-70b-instruct",
+          "label": "Llama 3 70B",
+          "description": "Meta Llama 3 instruct",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.7,
+            "max_tokens": 4096
+          }
+        },
+        {
+          "id": "abacusai/dracarys-llama-3.1-70b-instruct",
+          "label": "Dracarys Llama 3.1 70B",
+          "description": "Fine-tuned for code, summarization, multi-language",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.5,
+            "top_p": 1,
+            "max_tokens": 1024
+          }
+        },
+        {
+          "id": "google/gemma-4-31b-it",
+          "label": "Gemma 4 31B",
+          "description": "Dense 31B: frontier reasoning, coding, agentic",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "max_tokens": 16384,
+            "extra_body": {
+              "chat_template_kwargs": {
+                "enable_thinking": true
+              }
+            }
+          }
+        },
+        {
+          "id": "google/diffusiongemma-26b-a4b-it",
+          "label": "DiffusionGemma 26B",
+          "description": "Diffusion-based LLM, parallel token generation",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "max_tokens": 4096,
+            "extra_body": {
+              "chat_template_kwargs": {
+                "enable_thinking": true
+              }
+            }
+          }
+        },
+        {
+          "id": "google/gemma-3n-e4b-it",
+          "label": "Gemma 3N E4B",
+          "description": "Edge AI: text, audio, image input",
+          "stream_parser": "standard",
+          "features": [
+            "multimodal",
+            "vision",
+            "audio"
+          ],
+          "default_params": {
+            "temperature": 0.2,
+            "top_p": 0.7,
+            "max_tokens": 512,
+            "frequency_penalty": 0.0,
+            "presence_penalty": 0.0
+          }
+        },
+        {
+          "id": "google/gemma-3n-e2b-it",
+          "label": "Gemma 3N E2B",
+          "description": "Edge AI: text, audio, image input",
+          "stream_parser": "standard",
+          "features": [
+            "multimodal",
+            "vision",
+            "audio"
+          ],
+          "default_params": {
+            "temperature": 0.2,
+            "top_p": 0.7,
+            "max_tokens": 512,
+            "frequency_penalty": 0.0,
+            "presence_penalty": 0.0
+          }
+        },
+        {
+          "id": "minimaxai/minimax-m3",
+          "label": "MiniMax M3",
+          "description": "Multimodal MoE vision-language, coding, tool-calling",
+          "stream_parser": "standard",
+          "features": [
+            "multimodal",
+            "vision"
+          ],
+          "default_params": {
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "max_tokens": 8192
+          }
+        },
+        {
+          "id": "minimaxai/minimax-m2.7",
+          "label": "MiniMax M2.7",
+          "description": "230B text-to-text: coding, reasoning, office tasks",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 1,
+            "top_p": 0.95,
+            "max_tokens": 8192
+          }
+        },
+        {
+          "id": "moonshotai/kimi-k2.6",
+          "label": "Kimi K2.6",
+          "description": "1T multimodal MoE, coding, agentic tool use",
+          "stream_parser": "standard",
+          "features": [
+            "multimodal",
+            "vision"
+          ],
+          "default_params": {
+            "temperature": 1.0,
+            "top_p": 1.0,
+            "max_tokens": 16384
+          }
+        },
+        {
+          "id": "qwen/qwen3.5-122b-a10b",
+          "label": "Qwen 3.5 122B",
+          "description": "122B MoE (10B active): coding, reasoning, multimodal",
+          "stream_parser": "standard",
+          "features": [
+            "multimodal",
+            "vision"
+          ],
+          "default_params": {
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "max_tokens": 16384
+          }
+        },
+        {
+          "id": "qwen/qwen3.5-397b-a17b",
+          "label": "Qwen 3.5 397B",
+          "description": "400B MoE VLM: vision, chat, RAG, agentic",
+          "stream_parser": "standard",
+          "features": [
+            "multimodal",
+            "vision",
+            "image-to-image"
+          ],
+          "default_params": {
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "top_k": 20,
+            "presence_penalty": 0,
+            "repetition_penalty": 1,
+            "max_tokens": 16384
+          }
+        },
+        {
+          "id": "qwen/qwen3-next-80b-a3b-instruct",
+          "label": "Qwen3-Next 80B",
+          "description": "Hybrid attention, sparse MoE, ultra-long context",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.6,
+            "top_p": 0.7,
+            "max_tokens": 4096
+          }
+        },
+        {
+          "id": "z-ai/glm-5.1",
+          "label": "GLM 5.1",
+          "description": "Flagship LLM: agentic workflows, coding, reasoning",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 1,
+            "top_p": 1,
+            "max_tokens": 16384
+          }
+        }
+      ]
+    },
+    {
+      "name": "openai",
+      "type": "openai",
+      "base_url": "https://api.openai.com/v1",
+      "env_key": "OPENAI_API_KEY",
+      "models": [
+        {
+          "id": "gpt-4o",
+          "label": "GPT-4o",
+          "description": "OpenAI GPT-4o",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.7,
+            "max_tokens": 4096
+          }
+        },
+        {
+          "id": "gpt-4o-mini",
+          "label": "GPT-4o Mini",
+          "description": "Fast & cheap",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.7,
+            "max_tokens": 4096
+          }
+        }
+      ]
+    },
+    {
+      "name": "groq",
+      "type": "openai",
+      "base_url": "https://api.groq.com/openai/v1",
+      "env_key": "GROQ_API_KEY",
+      "models": [
+        {
+          "id": "llama-3.1-70b-versatile",
+          "label": "Llama 3.1 70B (Groq)",
+          "description": "Groq fast inference",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.7,
+            "max_tokens": 4096
+          }
+        },
+        {
+          "id": "mixtral-8x7b-32768",
+          "label": "Mixtral 8x7B (Groq)",
+          "description": "Groq Mixtral",
+          "stream_parser": "standard",
+          "default_params": {
+            "temperature": 0.7,
+            "max_tokens": 4096
+          }
+        }
+      ]
+    },
+    {
+      "name": "nvidia_image",
+      "type": "image_generation",
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "env_key": "NVIDIA_API_KEY",
+      "models": [
+        {
+          "id": "black-forest-labs/flux.1-schnell",
+          "label": "FLUX.1 Schnell",
+          "description": "Fast image generation (4 steps), OpenAI-compatible",
+          "stream_parser": "none",
+          "features": [
+            "image_generation"
+          ],
+          "default_params": {
+            "n": 1,
+            "size": "1024x1024",
+            "steps": 4
+          }
+        },
+        {
+          "id": "black-forest-labs/flux.1-dev",
+          "label": "FLUX.1 Dev",
+          "description": "High quality image generation (50 steps)",
+          "stream_parser": "none",
+          "features": [
+            "image_generation"
+          ],
+          "default_params": {
+            "n": 1,
+            "size": "1024x1024",
+            "steps": 50,
+            "guidance_scale": 3.5
+          }
+        }
+      ]
+    }
+  ]
+}

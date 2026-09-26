@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chatty-chronos"
+version = "3.0.0"
+description = "Terminal-first autonomous coding agent combining local LLMs and RAG"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "George V. Popa"}
+]
+keywords = ["ai-agent", "autonomous-coding", "llamacpp", "ollama", "rag", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "ollama>=0.4.0",
+    "prompt-toolkit>=3.0.43",
+    "rich>=13.7.0",
+    "python-dotenv>=1.0.1",
+    "chromadb>=0.4.0",
+    "sentence-transformers>=2.2.0",
+    "mcp>=1.0.0",
+    "nest-asyncio>=1.6.0",
+    "requests>=2.31.0",
+    "beautifulsoup4>=4.12.0",
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "structlog>=24.1.0",
+]
+
+[project.scripts]
+chronos = "main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]

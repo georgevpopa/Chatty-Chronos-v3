@@ -1,0 +1,37 @@
+{
+    "name": "Chatty Chronos Dev",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.black-formatter",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.formatting.provider": "none",
+                "editor.formatOnSave": true,
+                "[python]": {
+                    "editor.defaultFormatter": "ms-python.black-formatter"
+                }
+            }
+        }
+    },
+    // Forward the Chronos UI port, ChromaDB, and Ollama to the host
+    "forwardPorts": [8080, 8000, 11434],
+    
+    // Mount docker socket for Docker-in-Docker functionality so we can run docker-compose
+    "mounts": [
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    ],
+
+    // Install dependencies upon container creation
+    "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt",
+    
+    "remoteUser": "vscode"
+}

@@ -1,0 +1,10 @@
+{
+  "provider": "llamacpp",
+  "model": "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
+  "llamacpp_host": "http://host.docker.internal:8080",
+  "ollama_host": "http://host.docker.internal:11434",
+  "base_url": "https://integrate.api.nvidia.com/v1",
+  "embedding_provider": "local",
+  "embedding_model": "all-MiniLM-L6-v2",
+  "local_server_enabled": false
+}
