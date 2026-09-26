@@ -234,6 +234,12 @@ Chronos is open source (MIT). Issues and PRs welcome. Please keep it cross-platf
 and local-first: no machine-specific hardcoded paths, sane defaults, and every
 external integration optional.
 
+## 📈 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=georgevpopa/Chatty-Chronos-v1&type=Date)](https://star-history.com/#georgevpopa/Chatty-Chronos-v1&Date)
+
+---
+
 ## 📄 License
 
 MIT — see [LICENSE](LICENSE).
