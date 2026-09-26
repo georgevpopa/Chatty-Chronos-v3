@@ -27,7 +27,7 @@ class AppConfigSchema(BaseModel):
     local_server_reasoning_budget: int = 1024
     local_server_cache_ram: int = 512
     llamacpp_timeout: int = 600
-    agent_max_iterations: int = 15
+    agent_max_iterations: int = 30
     # Extra environment variables passed to a self-launched local server.
     # Empty by default; hardware-specific vars (e.g. AMD ROCm HSA_OVERRIDE_GFX_VERSION)
     # are opt-in and set by the user for their machine.

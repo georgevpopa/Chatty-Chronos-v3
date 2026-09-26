@@ -46,8 +46,12 @@ Be methodical. Break complex tasks into steps. Verify your work.
 
 
 class ReActAgent:
-    def __init__(self, config: Config, max_iterations: int = 30, depth: int = 0):
+    def __init__(self, config: Config, max_iterations: int = None, depth: int = 0):
         self.config = config
+        # Unified control: fall back to the configurable `agent_max_iterations`
+        # (default 30) when a caller doesn't pass an explicit value.
+        if max_iterations is None:
+            max_iterations = int(config.get("agent_max_iterations", 30))
         self.max_iterations = max_iterations
         self.depth = depth
         self.model = config.get("model")
