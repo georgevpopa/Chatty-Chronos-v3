@@ -216,11 +216,16 @@ class TestAgentToolCallID:
              patch("core.agent.request_permission", return_value=True):
             mock_tool = MockTool("read_file")
             mock_get_tool.return_value = mock_tool
-            agent.run("test")
+            result = agent.run("test")
 
-        # Tool call should have been assigned an ID
-        assert tc.id is not None
-        assert tc.id.startswith("call_")
+        # New design: we no longer mutate tc.id on the (possibly frozen) tool_call
+        # object. Instead an id is generated internally into a local map. The test
+        # verifies the agent completes successfully even when the tool_call has no id.
+        assert result == "done"
+        # The tool result was recorded with a generated call id
+        tool_msgs = [m for m in agent.messages if m.get("role") == "tool"]
+        assert len(tool_msgs) >= 1
+        assert tool_msgs[0]["tool_call_id"].startswith("call_")
 
 
 # ─── Agent _execute_tool with config/depth ────────────────────────────────────

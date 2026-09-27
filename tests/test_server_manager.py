@@ -425,6 +425,10 @@ class TestRestartWithModel:
 
 
 # ─── get_system_telemetry ─────────────────────────────────────────────────────
+@pytest.mark.skipif(
+    sys.platform != "win32",
+    reason="Windows-only telemetry path: mocks ctypes.windll which doesn't exist on non-Windows.",
+)
 class TestGetSystemTelemetry:
     def _make_win32_telemetry_test(self, with_pid=False):
         """Helper — runs get_system_telemetry with a win32 ctypes mock."""
