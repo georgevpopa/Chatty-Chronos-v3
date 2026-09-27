@@ -101,6 +101,8 @@ def _send_message_stream_locked(user_input):
     max_iterations = int(state.config.get("agent_max_iterations", 15))
 
     try:
+        reflection_retries = 0
+        max_reflection_retries = 2
         for iteration in range(max_iterations):
             yield {"type": "status", "content": f"Thinking... (step {iteration + 1}/{max_iterations})"}
             
@@ -164,10 +166,11 @@ def _send_message_stream_locked(user_input):
             final_text = "".join(final_text_chunks)
             state.messages.append({"role": "assistant", "content": final_text})
             
-            if state.config.get("self_reflection", False):
+            if state.config.get("self_reflection", False) and reflection_retries < max_reflection_retries:
                 yield {"type": "status", "content": "Running Self-Reflection..."}
                 is_ok, feedback = _run_self_reflection(user_input, final_text, provider, model, host, cloud_provider)
                 if not is_ok:
+                    reflection_retries += 1
                     yield {"type": "status", "content": f"Reviewer requested changes..."}
                     state.messages.append({"role": "user", "content": f"[Reviewer Feedback]: The task is incomplete or incorrect. Please fix it based on this feedback: {feedback}"})
                     continue
@@ -232,6 +235,8 @@ def _send_message_locked(user_input):
     max_iterations = int(state.config.get("agent_max_iterations", 15))
 
     try:
+        reflection_retries = 0
+        max_reflection_retries = 2
         for iteration in range(max_iterations):
             with state.console.status(f"[bold cyan]Thinking... (step {iteration + 1}/{max_iterations})[/bold cyan]"):
                 if provider == "llamacpp":
@@ -283,10 +288,11 @@ def _send_message_locked(user_input):
                 state.console.print("\n  [green]✅ Procesare finalizată (niciun răspuns text).[/green]\n")
             state.messages.append({"role": "assistant", "content": final_text})
             
-            if state.config.get("self_reflection", False):
+            if state.config.get("self_reflection", False) and reflection_retries < max_reflection_retries:
                 state.console.print("[dim]  Running Self-Reflection...[/dim]")
                 is_ok, feedback = _run_self_reflection(user_input, final_text, provider, model, host, cloud_provider)
                 if not is_ok:
+                    reflection_retries += 1
                     state.console.print(f"[yellow]  Reviewer Feedback: {feedback}[/yellow]")
                     state.messages.append({"role": "user", "content": f"[Reviewer Feedback]: The task is incomplete or incorrect. Please fix it based on this feedback: {feedback}"})
                     continue
@@ -326,20 +332,25 @@ def _run_self_reflection(user_input, final_text, provider, model, host, cloud_pr
     from llm import llamacpp_provider
 
     prompt = f"""
-You are an expert Reviewer Agent.
+You are a pragmatic reviewer. Judge whether the agent's reply is a REASONABLE,
+useful answer to what the user actually asked — not whether it is perfect.
+
 The user asked:
 {user_input}
 
 The agent replied:
 {final_text}
 
-Did the agent completely and correctly fulfill the user's request without cutting corners or leaving TODOs?
-Respond ONLY with 'YES' if it is perfect.
-If it is incomplete or flawed, respond with 'NO: <specific reason and instructions to fix>'.
+Approve (respond exactly 'YES') if the reply adequately addresses the request.
+Be lenient: do NOT demand extra sources, exhaustive detail, more frameworks, or
+perfection when the user asked something simple. A concise correct answer is a PASS.
+Only respond 'NO: <specific, essential fix>' if the reply is clearly wrong, empty,
+off-topic, or left the requested action undone (e.g. said it would write code but
+didn't). When in doubt, respond 'YES'.
 """.strip()
 
     messages = [
-        {"role": "system", "content": "You are a strict code and task reviewer."},
+        {"role": "system", "content": "You are a pragmatic reviewer who approves reasonable answers and only rejects clear failures."},
         {"role": "user", "content": prompt}
     ]
 
