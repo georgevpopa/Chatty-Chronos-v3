@@ -139,6 +139,8 @@ def list_provider_models(provider: dict) -> list[str]:
         "parse", "translate", "riva", "nvclip", "deplot", "kosmos", "vila", "neva",
         "video", "detector", "moderation", "deep-research", "antigravity",
         "nano-banana", "diffusion", "reward", "-vlm", "nemoretriever", "arctic-embed",
+        "fuyu", "calibration", "-med", "-fin", "vision", "-er-", "recurrentgemma",
+        "chatqa", "synthetic", "ocr", "speech", "voice",
     )
 
     def _is_chat(name: str) -> bool:
