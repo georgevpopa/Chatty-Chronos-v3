@@ -154,21 +154,35 @@ Larger models (e.g. `llama3.3:70b`, `gpt-oss:120b`) work the same way if your RA
    ```
    No path is hardcoded — you choose your binary and model.
 
-### Option 3 — Cloud API (Groq, Gemini, OpenRouter, …)
+### Option 3 — Cloud API (Gemini, OpenAI, Groq, OpenRouter, …)
 
-1. Create a `.env` file in the project root and add your key(s) — **never commit it**:
-   ```bash
-   GROQ_API_KEY=your_key_here
-   GEMINI_API_KEY=your_key_here
-   OPENROUTER_API_KEY=your_key_here
-   ```
-2. Activate the provider inside Chronos:
-   ```
-   chronos > /providers                 # see which providers have a key configured
-   chronos > /provider groq             # switch to it
-   chronos > /model llama-3.3-70b-versatile   # pick a model that provider serves
-   ```
-   Keys are hot-reloaded — no restart needed. Cloud is always **opt-in**.
+The easiest way is the interactive wizard — it auto-fills the endpoint and
+**discovers the available models** for you (no guessing model names):
+
+```
+chronos > /add_provider
+```
+1. Pick a provider from the list (Gemini, OpenAI, Groq, OpenRouter, Mistral, DeepSeek, NVIDIA).
+2. Paste your API key (a "get a key" link is shown for each).
+3. Chronos queries the provider and lists its **real available models** — choose a
+   number, type `all` (register them all), or press Enter for the default.
+4. Done. Use it: `/provider <name>` then `/model <name>`.
+
+Your key is saved to `~/.chatty-chronos/.env` (git-ignored). Manage providers anytime:
+```
+chronos > /edit_provider     # change base URL / model / key, or re-discover models
+chronos > /remove_provider   # remove a provider you no longer use
+chronos > /providers         # list configured providers and their status
+chronos > /models            # list the active provider's models
+```
+
+**Manual alternative** — put keys in `~/.chatty-chronos/.env`:
+```bash
+GEMINI_API_KEY=your_key_here
+GROQ_API_KEY=your_key_here
+OPENROUTER_API_KEY=your_key_here
+```
+Keys are hot-reloaded — no restart needed. Cloud is always **opt-in**.
 
 ### Option 4 — AI gateway (e.g. OmniRoute) — optional
 
@@ -195,9 +209,12 @@ sent keyless. The gateway is entirely optional; Chronos never requires it.
 | `/help` | Show all commands |
 | `/agent <task>` | Run the autonomous ReAct agent (multi-step, uses tools) |
 | `/team <task>` | Run a Multi-Agent workflow (Planner → Writer → Reviewer) |
-| `/model [name]` | Show or switch the active model |
+| `/model [name]` | Show or switch the active model (numbered list on cloud) |
 | `/provider [name]` | Show or switch the active LLM provider |
 | `/providers` | Show provider status (local + cloud) |
+| `/add_provider` | Add a cloud provider (auto-discovers its models) |
+| `/edit_provider` | Edit a provider (URL / model / key) + re-discover models |
+| `/remove_provider` | Remove a configured provider |
 | `/tools` | List all tools and their permission levels |
 | `/agents` | List registered agent types |
 | `/index <path>` | Index a directory for semantic search (RAG) |
