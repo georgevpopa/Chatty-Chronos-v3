@@ -55,6 +55,17 @@ def chat(messages: list, base_url: str, api_key_name: str = "", model: str = "",
 
     with httpx.Client(timeout=120) as client:
         response = client.post(url, json=payload, headers=headers)
+
+        # Friendly handling for common gateway/cloud errors instead of a raw traceback.
+        if response.status_code == 413:
+            raise RuntimeError(
+                "Payload too large for this provider (413). The conversation or a fetched "
+                "page is too big. Try /clear, or a provider/model with a larger input limit."
+            )
+        if response.status_code == 429:
+            raise RuntimeError(
+                "Provider rate-limited the request (429). Wait a moment or switch provider/model."
+            )
         response.raise_for_status()
 
         text = response.text.strip()

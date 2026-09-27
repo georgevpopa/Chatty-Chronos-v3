@@ -105,8 +105,10 @@ class FetchWebpage(Tool):
                     # For JSON, text/plain, etc
                     extracted = text_data
                 
-                # Cap the length to prevent blowing up the LLM context
-                max_len = 30000
+                # Cap the length to keep the LLM context (and provider payloads)
+                # reasonable. Full doc pages can be huge and cause 413 Payload Too
+                # Large on cloud/gateway providers. 8000 chars is plenty of signal.
+                max_len = 8000
                 if len(extracted) > max_len:
                     extracted = extracted[:max_len] + f"\n\n[Truncated — original was {len(extracted)} chars]"
                     
