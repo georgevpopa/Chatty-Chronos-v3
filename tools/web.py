@@ -66,17 +66,37 @@ class FetchWebpage(Tool):
             
         try:
             req = urllib.request.Request(
-                url, 
-                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChattyChronos/1.0'}
+                url,
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ChattyChronos/3.0',
+                    'Accept-Encoding': 'gzip, deflate',
+                }
             )
             with urllib.request.urlopen(req, timeout=10) as response:
                 content_type = response.headers.get_content_type()
                 charset = response.headers.get_content_charset() or 'utf-8'
-                
+
                 raw_data = response.read()
+
+                # Decompress if the server sent gzip/deflate (common on modern sites
+                # like python.org). urllib does NOT do this automatically.
+                encoding = (response.headers.get('Content-Encoding') or '').lower()
+                try:
+                    if 'gzip' in encoding:
+                        import gzip
+                        raw_data = gzip.decompress(raw_data)
+                    elif 'deflate' in encoding:
+                        import zlib
+                        try:
+                            raw_data = zlib.decompress(raw_data)
+                        except zlib.error:
+                            raw_data = zlib.decompress(raw_data, -zlib.MAX_WBITS)
+                except Exception:
+                    pass  # if decompression fails, fall through with raw bytes
+
                 try:
                     text_data = raw_data.decode(charset)
-                except UnicodeDecodeError:
+                except (UnicodeDecodeError, LookupError):
                     text_data = raw_data.decode('utf-8', errors='replace')
                 
                 if 'text/html' in content_type:

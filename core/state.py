@@ -46,10 +46,11 @@ def _build_system_prompt():
         f"IMPORTANT — staying current: Your training knowledge has a cutoff and may be "
         f"outdated relative to today ({today}). If the user asks about recent events, "
         f"current versions, prices, news, or anything you are unsure about or that may "
-        f"be newer than your knowledge, FIRST use web_search to get up-to-date "
-        f"information (then fetch_webpage on the best result if needed). If web_search "
-        f"returns nothing useful, use ask_user to request a source or more detail. "
-        f"Do not present possibly-outdated information as current fact."
+        f"be newer than your knowledge, use web_search. The search results already "
+        f"include titles and snippets that usually contain the answer — read them and "
+        f"answer directly. Only call fetch_webpage when you genuinely need the full page "
+        f"content beyond the snippets. If web_search returns nothing useful, use ask_user "
+        f"to request a source. Do not present possibly-outdated information as current fact."
     )
 
 SYSTEM_PROMPT = _build_system_prompt()
