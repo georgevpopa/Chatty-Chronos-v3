@@ -135,51 +135,111 @@ def handle_command(cmd):
         start_web_server(state.config, port)
 
     elif command == "/add_provider":
-        state.console.print("\n[bold cyan]=== Integrare Provider Nou ===[/bold cyan]")
-        
-        p_name = input("  Nume provider (ex: openai, anthropic): ").strip().lower()
-        if not p_name:
-            state.console.print("  [red]Numele este obligatoriu. Operatiune anulata.[/red]")
+        state.console.print("\n[bold cyan]=== Add an LLM Provider ===[/bold cyan]")
+
+        # Catalog of well-known providers — the "magic" is here: base_url, env var,
+        # and sensible default models are pre-filled. The user only picks + pastes a key.
+        KNOWN_PROVIDERS = [
+            {"name": "gemini",     "label": "Google Gemini",       "base_url": "https://generativelanguage.googleapis.com/v1beta/openai", "env_key": "GEMINI_API_KEY",     "model": "gemini-2.0-flash",                          "get_key": "https://aistudio.google.com/apikey"},
+            {"name": "openai",     "label": "OpenAI",              "base_url": "https://api.openai.com/v1",                               "env_key": "OPENAI_API_KEY",     "model": "gpt-4o",                                    "get_key": "https://platform.openai.com/api-keys"},
+            {"name": "groq",       "label": "Groq (fast, free tier)","base_url": "https://api.groq.com/openai/v1",                        "env_key": "GROQ_API_KEY",       "model": "llama-3.3-70b-versatile",                   "get_key": "https://console.groq.com/keys"},
+            {"name": "openrouter", "label": "OpenRouter (many models)","base_url": "https://openrouter.ai/api/v1",                       "env_key": "OPENROUTER_API_KEY", "model": "meta-llama/llama-3.3-70b-instruct",         "get_key": "https://openrouter.ai/keys"},
+            {"name": "mistral",    "label": "Mistral AI",          "base_url": "https://api.mistral.ai/v1",                               "env_key": "MISTRAL_API_KEY",    "model": "mistral-small-latest",                      "get_key": "https://console.mistral.ai/api-keys"},
+            {"name": "deepseek",   "label": "DeepSeek",            "base_url": "https://api.deepseek.com/v1",                             "env_key": "DEEPSEEK_API_KEY",   "model": "deepseek-chat",                             "get_key": "https://platform.deepseek.com/api_keys"},
+            {"name": "nvidia",     "label": "NVIDIA NIM",          "base_url": "https://integrate.api.nvidia.com/v1",                     "env_key": "NVIDIA_API_KEY",     "model": "meta/llama-3.1-70b-instruct",               "get_key": "https://build.nvidia.com/"},
+            {"name": "custom",     "label": "Custom (OpenAI-compatible) — enter details manually", "base_url": "", "env_key": "", "model": "", "get_key": ""},
+        ]
+
+        state.console.print("  Choose a provider:")
+        for i, p in enumerate(KNOWN_PROVIDERS, 1):
+            state.console.print(f"    [yellow]{i}[/yellow]. {p['label']}")
+
+        choice = input("\n  Number (or Enter to cancel): ").strip()
+        if not choice.isdigit() or not (1 <= int(choice) <= len(KNOWN_PROVIDERS)):
+            state.console.print("  [dim]Cancelled.[/dim]")
             return True
-            
-        p_url = input("  Base URL (ex: https://api.openai.com/v1): ").strip()
-        p_model = input("  Model implicit (ex: gpt-4o): ").strip()
-        
-        p_env = f"{p_name.upper()}_API_KEY"
-        
-        p_key = input(f"  API Key pentru {p_env} (lasa gol pentru a sari): ").strip()
-        
+
+        picked = KNOWN_PROVIDERS[int(choice) - 1]
+
+        if picked["name"] == "custom":
+            # Guided step-by-step entry for a provider not in the catalog.
+            state.console.print("\n  [cyan]Custom provider — I'll ask for each field, one at a time.[/cyan]")
+            state.console.print("  [dim]Any OpenAI-compatible endpoint works (most providers are).[/dim]\n")
+
+            # 1) name
+            while True:
+                p_name = input("  1/3  Provider name (a short id, e.g. 'together'): ").strip().lower()
+                if p_name:
+                    break
+                state.console.print("       [yellow]Name can't be empty.[/yellow]")
+
+            # If this name already exists, tell the user and offer to update it.
+            prov_file_check = state.config.dir / "providers.json"
+            if prov_file_check.exists():
+                try:
+                    _existing = json.load(open(prov_file_check, encoding="utf-8"))
+                    if any(p.get("name") == p_name for p in _existing):
+                        ans = input(f"       [note] '{p_name}' already exists. Update it? (y/N): ").strip().lower()
+                        if ans not in ("y", "yes"):
+                            state.console.print("  [dim]Cancelled.[/dim]")
+                            return True
+                except Exception:
+                    pass
+
+            # 2) base URL
+            while True:
+                p_url = input("  2/3  Base URL (e.g. https://api.together.xyz/v1): ").strip()
+                if p_url.startswith("http"):
+                    break
+                state.console.print("       [yellow]Should start with http:// or https://[/yellow]")
+
+            # 3) default model
+            p_model = input("  3/3  Default model id (e.g. meta-llama/Llama-3.3-70B): ").strip()
+
+            p_env = f"{p_name.upper()}_API_KEY"
+            state.console.print(f"       [dim]The API key will be stored as {p_env}.[/dim]")
+        else:
+            p_name, p_url, p_model, p_env = picked["name"], picked["base_url"], picked["model"], picked["env_key"]
+            state.console.print(f"\n  [cyan]{picked['label']}[/cyan] — base URL & default model auto-configured.")
+            if picked["get_key"]:
+                state.console.print(f"  [dim]Get a key at: {picked['get_key']}[/dim]")
+            # Let the user optionally override the default model.
+            custom_model = input(f"  Model [{p_model}] (Enter to keep default): ").strip()
+            if custom_model:
+                p_model = custom_model
+
+        p_key = input(f"\n  Paste your API key for {p_env} (or Enter to add later): ").strip()
+
         prov_file = state.config.dir / "providers.json"
         prov_data = []
         if prov_file.exists():
             with open(prov_file, "r", encoding="utf-8") as f:
                 prov_data = json.load(f)
-                
-        for p in prov_data:
-            if p.get("name") == p_name:
-                state.console.print(f"  [yellow]Eroare: Providerul '{p_name}' exista deja in configuratie![/yellow]")
-                return True
-                
-        new_provider = {
-            "name": p_name,
-            "type": "openai_compatible",
-            "base_url": p_url,
-            "model": p_model,
-            "env_key": p_env
-        }
-        prov_data.append(new_provider)
-        
+
+        # Update existing entry or append a new one.
+        existing = next((p for p in prov_data if p.get("name") == p_name), None)
+        new_provider = {"name": p_name, "type": "openai_compatible", "base_url": p_url, "model": p_model, "env_key": p_env}
+        if existing:
+            existing.update(new_provider)
+            state.console.print(f"  [dim]Updated existing provider '{p_name}'.[/dim]")
+        else:
+            prov_data.append(new_provider)
+
         with open(prov_file, "w", encoding="utf-8") as f:
             json.dump(prov_data, f, indent=2)
-            
+
         if p_key:
-            env_file = Path.cwd() / ".env"
-            with open(env_file, "a", encoding="utf-8") as f:
-                f.write(f"\n{p_env}={p_key}\n")
+            # Store the key in the user's global .env (~/.chatty-chronos/.env), gitignored.
+            env_file = state.config.dir / ".env"
+            existing_env = env_file.read_text(encoding="utf-8") if env_file.exists() else ""
+            lines = [l for l in existing_env.splitlines() if not l.startswith(f"{p_env}=")]
+            lines.append(f"{p_env}={p_key}")
+            env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
             os.environ[p_env] = p_key
-            
-        state.console.print(f"  [green]Succes! Providerul {p_name} a fost integrat in ecosistem.[/green]")
-        state.console.print(f"  [dim]Activeaza-l acum folosind: /config provider {p_name}[/dim]\n")
+            state.console.print(f"  [green]Key saved to {env_file}[/green]")
+
+        state.console.print(f"  [green]Provider '{p_name}' is ready.[/green]")
+        state.console.print(f"  [dim]Use it now:  /provider {p_name}   then  /model {p_model}[/dim]\n")
 
     elif command == "/model":
         provider = state.config.get("provider", "ollama")
