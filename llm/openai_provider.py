@@ -47,6 +47,7 @@ def chat(messages: list, base_url: str, api_key_name: str = "", model: str = "",
         "model": model,
         "messages": formatted_messages,
         "max_tokens": 4096,
+        "stream": False,
     }
 
     if tools:
@@ -55,10 +56,36 @@ def chat(messages: list, base_url: str, api_key_name: str = "", model: str = "",
     with httpx.Client(timeout=120) as client:
         response = client.post(url, json=payload, headers=headers)
         response.raise_for_status()
-        data = response.json()
-        
-        msg_data = data["choices"][0]["message"]
+
+        text = response.text.strip()
+        try:
+            data = response.json()
+        except Exception:
+            # Some gateways still stream SSE ("data: {...}" lines) even with
+            # stream=False. Try to recover the last JSON object from an SSE body.
+            data = None
+            for line in reversed(text.splitlines()):
+                line = line.strip()
+                if line.startswith("data:"):
+                    line = line[len("data:"):].strip()
+                if line in ("", "[DONE]"):
+                    continue
+                try:
+                    import json as _json
+                    data = _json.loads(line)
+                    break
+                except Exception:
+                    continue
+            if data is None:
+                raise RuntimeError(
+                    f"Provider returned a non-JSON response (first 200 chars): {text[:200]!r}"
+                )
+
+        try:
+            msg_data = data["choices"][0]["message"]
+        except (KeyError, IndexError, TypeError):
+            raise RuntimeError(f"Unexpected response shape from provider: {str(data)[:200]}")
         content = msg_data.get("content") or ""
         tool_calls = msg_data.get("tool_calls")
-        
+
         return LlamaCppResponse(content, tool_calls)
