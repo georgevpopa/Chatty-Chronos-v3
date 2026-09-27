@@ -83,6 +83,8 @@ def _send_message_stream_locked(user_input):
 
     yield {"type": "status", "content": "Retrieving context & memory..."}
     with state.console.status("[bold cyan]Retrieving context & memory...[/bold cyan]"):
+        from core.state import _build_system_prompt
+        state.SYSTEM_PROMPT = _build_system_prompt()
         rag_context = get_rag_context(user_input, config=state.config)
         
         from core.memory import search_memory
@@ -216,6 +218,8 @@ def _send_message_locked(user_input):
     tools_schema = get_ollama_tools_schema()
 
     with state.console.status("[bold cyan]Retrieving context & memory...[/bold cyan]"):
+        from core.state import _build_system_prompt
+        state.SYSTEM_PROMPT = _build_system_prompt()
         rag_context = get_rag_context(user_input, config=state.config)
         
         from core.memory import search_memory

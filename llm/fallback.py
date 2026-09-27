@@ -132,8 +132,14 @@ def list_provider_models(provider: dict) -> list[str]:
     env_key = provider.get("env_key") or ""
     api_key = os.environ.get(env_key, "") if env_key else ""
 
-    _EXCLUDE = ("tts", "embedding", "embed", "whisper", "audio", "image",
-                "-image", "imagen", "lyria", "transcribe", "computer-use", "robotics")
+    _EXCLUDE = (
+        "tts", "embed", "embedding", "whisper", "audio", "image", "-image",
+        "imagen", "lyria", "transcribe", "computer-use", "robotics", "clip",
+        "rerank", "reranker", "guard", "safety", "content-safety", "topic-control",
+        "parse", "translate", "riva", "nvclip", "deplot", "kosmos", "vila", "neva",
+        "video", "detector", "moderation", "deep-research", "antigravity",
+        "nano-banana", "diffusion", "reward", "-vlm", "nemoretriever", "arctic-embed",
+    )
 
     def _is_chat(name: str) -> bool:
         n = name.lower()

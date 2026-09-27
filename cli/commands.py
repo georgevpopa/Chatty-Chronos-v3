@@ -52,7 +52,9 @@ def handle_command(cmd):
         table.add_row("/spec <feature>", "Generate requirements, design, and task specs")
         table.add_row("/specs", "List all generated specs")
         table.add_row("/providers", "Show LLM API providers status")
-        table.add_row("/add_provider", "Wizard to dynamically add a new LLM provider")
+        table.add_row("/add_provider", "Wizard to add an LLM provider (auto-discovers models)")
+        table.add_row("/edit_provider", "Edit a provider (URL, model, key) + re-discover models")
+        table.add_row("/remove_provider", "Remove a configured provider")
         table.add_row("/plugins", "List loaded plugins / reload plugins from disk")
         table.add_row("/agents", "List registered agent types / register a new one")
         table.add_row("/doctor", "Check system dependencies health")
@@ -267,6 +269,85 @@ def handle_command(cmd):
         state.console.print(f"  [green]Provider '{p_name}' is ready.[/green]")
         state.console.print(f"  [dim]Use it now:  /provider {p_name}   then  /model {p_model}[/dim]\n")
 
+    elif command == "/remove_provider":
+        prov_file = state.config.dir / "providers.json"
+        prov_data = []
+        if prov_file.exists():
+            with open(prov_file, "r", encoding="utf-8") as f:
+                prov_data = json.load(f)
+        # Removable = everything except the built-in local 'ollama'.
+        removable = [p for p in prov_data if p.get("name") != "ollama"]
+        if not removable:
+            state.console.print("  [dim]No removable providers configured.[/dim]")
+            return True
+        state.console.print("\n[bold cyan]=== Remove a Provider ===[/bold cyan]")
+        for i, p in enumerate(removable, 1):
+            state.console.print(f"    [yellow]{i}[/yellow]. {p['name']}  [dim]({p.get('model','')})[/dim]")
+        sel = input("\n  Number to remove (or Enter to cancel): ").strip()
+        if not sel.isdigit() or not (1 <= int(sel) <= len(removable)):
+            state.console.print("  [dim]Cancelled.[/dim]"); return True
+        target = removable[int(sel) - 1]
+        confirm = input(f"  Remove '{target['name']}'? (y/N): ").strip().lower()
+        if confirm not in ("y", "yes"):
+            state.console.print("  [dim]Cancelled.[/dim]"); return True
+        prov_data = [p for p in prov_data if p.get("name") != target["name"]]
+        with open(prov_file, "w", encoding="utf-8") as f:
+            json.dump(prov_data, f, indent=2)
+        # If the removed provider was active, fall back to ollama (local-first).
+        if state.config.get("provider") == target["name"]:
+            state.config.set("provider", "ollama")
+            state.console.print("  [dim]Active provider was removed; switched back to 'ollama'.[/dim]")
+        state.console.print(f"  [green]Provider '{target['name']}' removed.[/green]")
+        state.console.print(f"  [dim]Its API key remains in ~/.chatty-chronos/.env (remove manually if desired).[/dim]\n")
+
+    elif command == "/edit_provider":
+        prov_file = state.config.dir / "providers.json"
+        prov_data = []
+        if prov_file.exists():
+            with open(prov_file, "r", encoding="utf-8") as f:
+                prov_data = json.load(f)
+        editable = [p for p in prov_data if p.get("name") != "ollama"]
+        if not editable:
+            state.console.print("  [dim]No editable providers. Use /add_provider first.[/dim]")
+            return True
+        state.console.print("\n[bold cyan]=== Edit a Provider ===[/bold cyan]")
+        for i, p in enumerate(editable, 1):
+            state.console.print(f"    [yellow]{i}[/yellow]. {p['name']}  [dim](model: {p.get('model','')})[/dim]")
+        sel = input("\n  Number to edit (or Enter to cancel): ").strip()
+        if not sel.isdigit() or not (1 <= int(sel) <= len(editable)):
+            state.console.print("  [dim]Cancelled.[/dim]"); return True
+        target = editable[int(sel) - 1]
+        state.console.print(f"\n  Editing '{target['name']}' — press Enter to keep the current value.")
+        new_url = input(f"  Base URL [{target.get('base_url','')}]: ").strip()
+        if new_url:
+            target["base_url"] = new_url
+        new_model = input(f"  Default model [{target.get('model','')}]: ").strip()
+        if new_model:
+            target["model"] = new_model
+        new_key = input(f"  New API key for {target.get('env_key','')} (Enter to keep): ").strip()
+        if new_key and target.get("env_key"):
+            env_file = state.config.dir / ".env"
+            existing_env = env_file.read_text(encoding="utf-8") if env_file.exists() else ""
+            lines = [l for l in existing_env.splitlines() if not l.startswith(f"{target['env_key']}=")]
+            lines.append(f"{target['env_key']}={new_key}")
+            env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            os.environ[target["env_key"]] = new_key
+            state.console.print(f"  [green]Key updated.[/green]")
+        # Optionally re-discover models with the (possibly new) key.
+        redisc = input("  Re-discover available models now? (y/N): ").strip().lower()
+        if redisc in ("y", "yes"):
+            from llm.fallback import list_provider_models
+            with state.console.status("[bold cyan]Discovering models...[/bold cyan]"):
+                models = list_provider_models(target)
+            if models:
+                target["available_models"] = models
+                state.console.print(f"  [green]Found {len(models)} models. Default kept: {target.get('model')}[/green]")
+            else:
+                state.console.print("  [yellow]Could not discover models (check key/URL).[/yellow]")
+        with open(prov_file, "w", encoding="utf-8") as f:
+            json.dump(prov_data, f, indent=2)
+        state.console.print(f"  [green]Provider '{target['name']}' updated.[/green]\n")
+
     elif command == "/model":
         provider = state.config.get("provider", "ollama")
 
@@ -446,20 +527,7 @@ def handle_command(cmd):
     elif command == "/models":
         active_provider = state.config.get("provider", "ollama")
 
-        if active_provider == "nvidia":
-            from llm.fallback import list_nvidia_models
-            state.console.print("[dim] Se încarcă catalogul live de endpoint-uri de la NVIDIA...[/dim]")
-            models = list_nvidia_models()
-            if models:
-                state.console.print("\n[bold]Modele disponibile în NVIDIA Cloud (Free Endpoints):[/bold]")
-                current = state.config.get("model")
-                for m in sorted(models):
-                    marker = " [green]← activ[/green]" if m == current else ""
-                    state.console.print(f"  • {m}{marker}")
-                state.console.print()
-            else:
-                state.console.print("[red]  Nu s-a putut descărca catalogul NVIDIA. Verifică cheia din .env sau conexiunea.[/red]")
-        elif active_provider == "llamacpp":
+        if active_provider == "llamacpp":
             current = state.config.get("model")
             state.console.print(f"\n[bold]Current llama.cpp model:[/bold]")
             state.console.print(f"  • [green]{current}[/green]  ← active")
