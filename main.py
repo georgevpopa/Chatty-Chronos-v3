@@ -167,6 +167,17 @@ def main(session=None):
         history_file = state.config.dir / "history.txt"
         session = PromptSession(history=FileHistory(str(history_file)))
 
+    # First-run setup wizard (skippable). Runs only if no config exists yet, unless
+    # the user passed --no-setup. Never blocks startup (falls back to Ollama).
+    if "--no-setup" not in sys.argv:
+        try:
+            from core.setup_wizard import is_first_run, run_setup
+            if is_first_run():
+                run_setup()
+                state.config.save()  # persist so it won't re-trigger next launch
+        except Exception:
+            pass
+
     from llm.server_manager import start_local_server
     if state.config.get("provider", "ollama") == "llamacpp":
         state.console.print("  [dim]Starting local llama.cpp server...[/dim]")

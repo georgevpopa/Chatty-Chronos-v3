@@ -52,6 +52,7 @@ def handle_command(cmd):
         table.add_row("/spec <feature>", "Generate requirements, design, and task specs")
         table.add_row("/specs", "List all generated specs")
         table.add_row("/providers", "Show LLM API providers status")
+        table.add_row("/setup", "Re-run the guided first-run setup wizard")
         table.add_row("/add_provider", "Wizard to add an LLM provider (auto-discovers models)")
         table.add_row("/edit_provider", "Edit a provider (URL, model, key) + re-discover models")
         table.add_row("/remove_provider", "Remove a configured provider")
@@ -268,6 +269,11 @@ def handle_command(cmd):
 
         state.console.print(f"  [green]Provider '{p_name}' is ready.[/green]")
         state.console.print(f"  [dim]Use it now:  /provider {p_name}   then  /model {p_model}[/dim]\n")
+
+    elif command == "/setup":
+        from core.setup_wizard import run_setup
+        run_setup(force=True)
+        state.config.save()
 
     elif command == "/remove_provider":
         prov_file = state.config.dir / "providers.json"
