@@ -64,22 +64,31 @@ DEFAULT_PROVIDERS = [
 
 def _load_providers() -> list[dict]:
     """Load providers from ~/.chatty-chronos/providers.json (or use defaults).
-    Creates or updates the file with defaults if a new provider is missing.
+
+    The user's file is authoritative. If it exists, we KEEP all of the user's
+    providers (including custom ones like a gateway) and only APPEND any built-in
+    defaults that are missing — we never overwrite or drop the user's entries.
     """
     if PROVIDERS_FILE.exists():
-        with open(PROVIDERS_FILE, "r", encoding="utf-8") as f:
-            try:
+        try:
+            with open(PROVIDERS_FILE, "r", encoding="utf-8") as f:
                 loaded = json.load(f)
-                # Sincronizare: Dacă am adăugat nvidia în cod dar nu există în JSON-ul vechi, forțăm rescrierea
-                loaded_names = {p["name"] for p in loaded}
-                default_names = {p["name"] for p in DEFAULT_PROVIDERS}
-                if not default_names.issubset(loaded_names):
-                    raise ValueError("New provider detected in code configs.")
+            if isinstance(loaded, list) and loaded:
+                loaded_names = {p.get("name") for p in loaded}
+                # Append built-in defaults the user doesn't have yet (non-destructive).
+                appended = False
+                for dp in DEFAULT_PROVIDERS:
+                    if dp["name"] not in loaded_names:
+                        loaded.append(dp)
+                        appended = True
+                if appended:
+                    with open(PROVIDERS_FILE, "w", encoding="utf-8") as f:
+                        json.dump(loaded, f, indent=2)
                 return loaded
-            except Exception:
-                pass
+        except Exception:
+            pass  # fall through to (re)create defaults on parse error
 
-    # Create or overwrite default providers.json
+    # Create default providers.json (first run or unreadable file)
     PROVIDERS_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(PROVIDERS_FILE, "w", encoding="utf-8") as f:
         json.dump(DEFAULT_PROVIDERS, f, indent=2)
