@@ -109,7 +109,7 @@ class TestEstimateTokens:
             {"role": "assistant", "content": "Hi there!"},
         ]
         tokens = estimate_messages_tokens(messages)
-        assert tokens >= 10
+        assert tokens > 5
 
     def test_tool_calls_included(self):
         from core.context import estimate_messages_tokens

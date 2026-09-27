@@ -467,7 +467,7 @@ class TestMemoryInjection:
 
 # ─── _send_message_locked — self_reflection ───────────────────────────────────
 class TestSelfReflectionInChat:
-    @patch("core.chat._run_self_reflection", return_value=(False, "Needs more detail"))
+    @patch("core.chat._run_self_reflection")
     @patch("core.chat.compact_context", side_effect=lambda msgs, cfg: msgs)
     @patch("core.chat.get_rag_context", return_value=None)
     @patch("core.memory.search_memory", return_value=[])
@@ -476,10 +476,12 @@ class TestSelfReflectionInChat:
     @patch("core.chat.ollama_provider.chat")
     def test_self_reflection_retries(self, mock_chat, mock_tools, mock_providers,
                                       mock_mem, mock_rag, mock_compact, mock_reflect):
-        """When self_reflection is enabled and fails, agent retries."""
+        """When self_reflection fails once then passes, the agent retries exactly once."""
         resp1 = MockResponse("First attempt")
         resp2 = MockResponse("Second attempt with fix")
         mock_chat.side_effect = [resp1, resp2]
+        # Reflection: FAIL the first time (triggers a retry), then PASS.
+        mock_reflect.side_effect = [(False, "Needs more detail"), (True, "")]
 
         from core import state
         state.messages = [{"role": "system", "content": "prompt"}]
@@ -490,7 +492,7 @@ class TestSelfReflectionInChat:
         from core.chat import _send_message_locked
         _send_message_locked("task")
 
-        # Should have been called twice (retry after reflection)
+        # Should have been called twice (initial + one retry after reflection)
         assert mock_chat.call_count == 2
         # Feedback message should be in history
         feedback_msgs = [m for m in state.messages if "Reviewer Feedback" in m.get("content", "")]
