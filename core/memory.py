@@ -66,6 +66,9 @@ def search_memory(query: str, n_results: int = 3):
     """Search the vector memory for semantic matches."""
     if _collection is not None:
         try:
+            # Cheap short-circuit: nothing stored -> skip embedding work entirely.
+            if _collection.count() == 0:
+                return []
             results = _collection.query(
                 query_texts=[query],
                 n_results=n_results

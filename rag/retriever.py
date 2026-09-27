@@ -33,6 +33,15 @@ def query_knowledge(question: str, collection_name: str = "project", n_results: 
     except Exception:
         return []
 
+    # Cheap short-circuit: if nothing has been indexed, skip RAG entirely. This
+    # avoids running the embedding model on every chat turn when there's no index
+    # to search (a big latency win for plain chat). count() does NOT embed.
+    try:
+        if collection.count() == 0:
+            return []
+    except Exception:
+        return []
+
     # Query a larger pool of candidates to allow re-ranking.
     # Guard the query: if embeddings are unavailable (e.g. a misconfigured embedding
     # provider / offline embedding server), degrade gracefully to no RAG context
