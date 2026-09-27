@@ -140,7 +140,11 @@ def run_setup(force: bool = False):
             c.print("  [dim]Unrecognized choice — keeping local-first Ollama default.[/dim]")
             cfg.set("provider", "ollama")
 
-        c.print("\n  [bold green]Setup complete. Type your first message, or /help.[/bold green]\n")
+        c.print("\n  [bold green]Setup complete.[/bold green]")
+        c.print("  [dim]This is your PRIMARY engine (used on startup). You can add more anytime — local or cloud — and switch instantly with /provider.[/dim]")
+        c.print("  [dim]  /add_provider  — add a cloud provider (auto-discovers models)[/dim]")
+        c.print("  [dim]  /provider <name>  — switch engine/provider   ·   /providers  — list all[/dim]")
+        c.print("  [bold green]Type your first message, or /help.[/bold green]\n")
     except (KeyboardInterrupt, EOFError):
         # User skipped — ensure a safe local-first default exists so startup never breaks.
         c.print("\n  [dim]Setup skipped — using local-first defaults (Ollama). Re-run anytime with /setup.[/dim]\n")
