@@ -90,10 +90,13 @@ class TestBuildAgent:
         from core.agent_registry import build_agent
         from core.config import Config
         config = Config()
+        # Set explicitly so the test is isolated from any persisted config value.
+        config.set("agent_max_iterations", 30)
         agent = build_agent("nonexistent", config)
         # Should fall back to generic agent
         assert agent is not None
-        assert agent.max_iterations == 30  # default
+        # Generic agent reads max_iterations from config
+        assert agent.max_iterations == 30
 
     def test_build_agent_filters_tools(self):
         from core.agent_registry import build_agent

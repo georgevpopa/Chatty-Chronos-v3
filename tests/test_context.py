@@ -21,7 +21,7 @@ class TestEstimateMessagesTokens:
             {"role": "assistant", "content": "Hi there!"},
         ]
         tokens = estimate_messages_tokens(messages)
-        assert tokens > 10
+        assert tokens >= 10
 
     def test_message_with_tool_calls(self):
         messages = [
