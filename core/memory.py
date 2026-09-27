@@ -43,18 +43,24 @@ def store_memory(key: str, content: str, metadata: dict = None):
     meta["key"] = key
     
     if _collection is not None:
-        _collection.add(
-            documents=[content],
-            metadatas=[meta],
-            ids=[key]
-        )
-        return True
-    else:
-        _fallback_facts.append({"key": key, "content": content, "metadata": meta})
-        _fallback_memory_file.parent.mkdir(exist_ok=True, parents=True)
+        try:
+            _collection.add(
+                documents=[content],
+                metadatas=[meta],
+                ids=[key]
+            )
+            return True
+        except Exception:
+            pass  # embeddings/vector store failed — fall through to JSON fallback
+    # Fallback: persist to a simple JSON file so memory still works without embeddings.
+    _fallback_facts.append({"key": key, "content": content, "metadata": meta})
+    _fallback_memory_file.parent.mkdir(exist_ok=True, parents=True)
+    try:
         with open(_fallback_memory_file, "w", encoding="utf-8") as f:
             json.dump(_fallback_facts, f, indent=2, ensure_ascii=False)
-        return True
+    except Exception:
+        return False
+    return True
 
 def search_memory(query: str, n_results: int = 3):
     """Search the vector memory for semantic matches."""

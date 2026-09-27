@@ -33,9 +33,16 @@ def query_knowledge(question: str, collection_name: str = "project", n_results: 
     except Exception:
         return []
 
-    # Query a larger pool of candidates to allow re-ranking
-    candidate_limit = max(15, n_results * 3)
-    results = collection.query(query_texts=[question], n_results=candidate_limit)
+    # Query a larger pool of candidates to allow re-ranking.
+    # Guard the query: if embeddings are unavailable (e.g. a misconfigured embedding
+    # provider / offline embedding server), degrade gracefully to no RAG context
+    # instead of crashing the whole chat turn.
+    try:
+        candidate_limit = max(15, n_results * 3)
+        results = collection.query(query_texts=[question], n_results=candidate_limit)
+    except Exception as e:
+        console.print(f"  [yellow]RAG unavailable (embeddings error), continuing without context.[/yellow]")
+        return []
 
     if not results or not results["documents"] or not results["documents"][0]:
         return []
