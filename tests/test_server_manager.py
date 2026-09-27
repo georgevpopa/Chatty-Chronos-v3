@@ -375,14 +375,16 @@ class TestStopLocalServer:
         with patch("os.system"), patch("time.sleep"):
             stop_local_server()
 
-    def test_stop_orphan_kills(self):
+    def test_stop_does_not_kill_external(self):
+        # With no Chronos-started process, stop must NOT kill external llama-server
+        # instances (no global pkill/taskkill).
         import llm.server_manager as sm
         from llm.server_manager import stop_local_server
         sm._process = None
 
         with patch("os.system") as mock_sys:
             stop_local_server()
-            mock_sys.assert_called_once()
+            mock_sys.assert_not_called()
 
 
 # ─── restart_with_model ──────────────────────────────────────────────────────

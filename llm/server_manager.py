@@ -179,10 +179,15 @@ def start_local_server(config: Config):
 
 
 def stop_local_server():
-    """Terminate the background llama-server process."""
+    """Terminate the background llama-server process THAT CHRONOS STARTED.
+
+    Only stops the process Chronos launched itself (_process). It must NOT kill
+    external llama-server instances the user started manually (e.g. their own
+    Vulkan/GPU server), so we never do a global pkill here.
+    """
     global _process
     if _process and _process.poll() is None:
-        console.print(f"  [cyan]Stopping local llama-server...[/cyan]")
+        console.print(f"  [cyan]Stopping local llama-server (started by Chronos)...[/cyan]")
         _process.terminate()
         try:
             _process.wait(timeout=5)
@@ -190,11 +195,6 @@ def stop_local_server():
             _process.kill()
         console.print("  [dim]llama-server stopped.[/dim]")
         _process = None
-    # Also kill any orphaned llama-server processes
-    if sys.platform == "win32":
-        os.system("taskkill /f /im llama-server.exe >nul 2>&1")
-    else:
-        os.system("pkill -f llama-server >/dev/null 2>&1")
 
 
 def restart_with_model(config, model_name):

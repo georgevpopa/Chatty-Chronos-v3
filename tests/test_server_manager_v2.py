@@ -174,7 +174,9 @@ class TestLinuxPaths:
             MockClient.return_value = mock_ctx
             start_local_server(mock_config)
 
-    def test_stop_linux_orphan(self):
+    def test_stop_does_not_kill_external(self):
+        """With no Chronos-started process, stop_local_server must NOT pkill/taskkill
+        external llama-server instances the user started manually."""
         import llm.server_manager as sm
         from llm.server_manager import stop_local_server
         sm._process = None
@@ -182,7 +184,7 @@ class TestLinuxPaths:
         with patch("sys.platform", "linux"), \
              patch("os.system") as mock_sys:
             stop_local_server()
-            mock_sys.assert_called_once()
+            mock_sys.assert_not_called()
 
     def test_telemetry_linux(self):
         import llm.server_manager as sm
