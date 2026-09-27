@@ -27,16 +27,22 @@ dependencies = [
     "prompt-toolkit>=3.0.43",
     "rich>=13.7.0",
     "python-dotenv>=1.0.1",
+    "pydantic>=2.0.0",
     "chromadb>=0.4.0",
     "sentence-transformers>=2.2.0",
     "mcp>=1.0.0",
     "nest-asyncio>=1.6.0",
     "requests>=2.31.0",
     "beautifulsoup4>=4.12.0",
+    "pyperclip>=1.8.2",
+    "RestrictedPython>=6.2",
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",
     "structlog>=24.1.0",
 ]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0", "hypothesis>=6.0"]
 
 [project.scripts]
 chronos = "main:main"
