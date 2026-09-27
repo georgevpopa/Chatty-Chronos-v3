@@ -199,16 +199,49 @@ def handle_command(cmd):
             p_env = f"{p_name.upper()}_API_KEY"
             state.console.print(f"       [dim]The API key will be stored as {p_env}.[/dim]")
         else:
-            p_name, p_url, p_model, p_env = picked["name"], picked["base_url"], picked["model"], picked["env_key"]
-            state.console.print(f"\n  [cyan]{picked['label']}[/cyan] — base URL & default model auto-configured.")
+            p_name, p_url, p_env = picked["name"], picked["base_url"], picked["env_key"]
+            p_model = picked["model"]
+            state.console.print(f"\n  [cyan]{picked['label']}[/cyan] — base URL auto-configured.")
             if picked["get_key"]:
                 state.console.print(f"  [dim]Get a key at: {picked['get_key']}[/dim]")
-            # Let the user optionally override the default model.
-            custom_model = input(f"  Model [{p_model}] (Enter to keep default): ").strip()
-            if custom_model:
-                p_model = custom_model
 
         p_key = input(f"\n  Paste your API key for {p_env} (or Enter to add later): ").strip()
+
+        # Save the key first (to ~/.chatty-chronos/.env) so we can query the provider.
+        if p_key:
+            env_file = state.config.dir / ".env"
+            existing_env = env_file.read_text(encoding="utf-8") if env_file.exists() else ""
+            lines = [l for l in existing_env.splitlines() if not l.startswith(f"{p_env}=")]
+            lines.append(f"{p_env}={p_key}")
+            env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            os.environ[p_env] = p_key
+            state.console.print(f"  [green]Key saved to {env_file}[/green]")
+
+        # Discover available models from the provider (magic!). Requires a key.
+        available_models = []
+        if p_key:
+            from llm.fallback import list_provider_models
+            with state.console.status("[bold cyan]Discovering available models...[/bold cyan]"):
+                available_models = list_provider_models({"base_url": p_url, "env_key": p_env})
+
+        if available_models:
+            state.console.print(f"\n  [green]Found {len(available_models)} available models:[/green]")
+            for i, m in enumerate(available_models, 1):
+                state.console.print(f"    [yellow]{i}[/yellow]. {m}")
+            state.console.print("\n  Choose: a [yellow]number[/yellow] (default model) · "
+                                 "[yellow]all[/yellow] (register all) · [yellow]Enter[/yellow] (keep suggested)")
+            sel = input("  > ").strip().lower()
+            if sel == "all":
+                p_model = available_models[0]
+                state.console.print(f"  [dim]Registered all {len(available_models)} models. Default: {p_model}[/dim]")
+            elif sel.isdigit() and 1 <= int(sel) <= len(available_models):
+                p_model = available_models[int(sel) - 1]
+            # else: keep p_model (catalog default / custom)
+        else:
+            # Couldn't discover (no key, or offline) -> let user type/confirm a model.
+            typed = input(f"  Default model [{p_model or 'none'}] (Enter to keep): ").strip()
+            if typed:
+                p_model = typed
 
         prov_file = state.config.dir / "providers.json"
         prov_data = []
@@ -218,7 +251,10 @@ def handle_command(cmd):
 
         # Update existing entry or append a new one.
         existing = next((p for p in prov_data if p.get("name") == p_name), None)
-        new_provider = {"name": p_name, "type": "openai_compatible", "base_url": p_url, "model": p_model, "env_key": p_env}
+        new_provider = {"name": p_name, "type": "openai_compatible", "base_url": p_url,
+                        "model": p_model, "env_key": p_env}
+        if available_models:
+            new_provider["available_models"] = available_models  # cache for /model
         if existing:
             existing.update(new_provider)
             state.console.print(f"  [dim]Updated existing provider '{p_name}'.[/dim]")
@@ -228,29 +264,55 @@ def handle_command(cmd):
         with open(prov_file, "w", encoding="utf-8") as f:
             json.dump(prov_data, f, indent=2)
 
-        if p_key:
-            # Store the key in the user's global .env (~/.chatty-chronos/.env), gitignored.
-            env_file = state.config.dir / ".env"
-            existing_env = env_file.read_text(encoding="utf-8") if env_file.exists() else ""
-            lines = [l for l in existing_env.splitlines() if not l.startswith(f"{p_env}=")]
-            lines.append(f"{p_env}={p_key}")
-            env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
-            os.environ[p_env] = p_key
-            state.console.print(f"  [green]Key saved to {env_file}[/green]")
-
         state.console.print(f"  [green]Provider '{p_name}' is ready.[/green]")
         state.console.print(f"  [dim]Use it now:  /provider {p_name}   then  /model {p_model}[/dim]\n")
 
     elif command == "/model":
         provider = state.config.get("provider", "ollama")
 
+        # Cloud providers: show/switch among the models discovered for this provider.
+        cloud = next((p for p in get_available_providers()
+                      if p["name"] == provider and not p.get("is_local") and provider not in ("ollama", "llamacpp")), None)
+        if cloud is not None:
+            avail = cloud.get("available_models") or []
+            current = state.config.get("model", "(not set)")
+            if not arg:
+                state.console.print(f"\n  [bold]Provider:[/bold] {provider}  [bold]Current model:[/bold] {current}\n")
+                if avail:
+                    for i, m in enumerate(avail, 1):
+                        marker = " [green]← active[/green]" if m == current else ""
+                        state.console.print(f"  [yellow]{i:>2}.[/yellow] {m}{marker}")
+                    state.console.print(f"\n  [dim]Usage: /model <number|name>  ·  models cached from provider[/dim]\n")
+                else:
+                    state.console.print("  [dim]No cached model list. Set one with /model <name>, "
+                                        "or re-run /add_provider to discover models.[/dim]\n")
+                return True
+            # arg given: resolve by number (from cached list) or use as raw name
+            if arg.isdigit() and avail and 1 <= int(arg) <= len(avail):
+                chosen = avail[int(arg) - 1]
+            else:
+                chosen = arg
+            state.config.set("model", chosen)
+            state.console.print(f"  Model set to: {chosen}")
+            return True
+
         if provider == "llamacpp":
-            # List available GGUF files
+            # llama.cpp serves whatever model the running server loaded. If no local
+            # GGUF directory is configured, just show the current model (don't error).
             model_path = state.config.get("local_server_model", "")
             models_dir = os.path.dirname(model_path) if model_path else ""
 
             if not models_dir or not os.path.isdir(models_dir):
-                state.console.print(f"  [red]Models directory not found: {models_dir}[/red]")
+                current_model = state.config.get("model", "(not set)")
+                if not arg:
+                    state.console.print(f"\n  [bold]Provider:[/bold] llama.cpp")
+                    state.console.print(f"  [bold]Active model:[/bold] {current_model}")
+                    state.console.print(f"  [bold]Server:[/bold] {state.config.get('llamacpp_host', 'http://localhost:8080')}")
+                    state.console.print("\n  [dim]llama.cpp uses whatever model its server loaded. To change it, restart llama-server with a different GGUF, then /model <name> to label it.[/dim]\n")
+                else:
+                    state.config.set("model", arg)
+                    state.console.print(f"  Model label set to: {arg}")
+                    state.console.print(f"  [dim]Note: this only labels it; the server must actually be running that model.[/dim]")
                 return True
 
             gguf_files = sorted([f for f in os.listdir(models_dir) if f.endswith(".gguf")])
@@ -404,6 +466,24 @@ def handle_command(cmd):
             state.console.print("\n[dim]  To change model, restart llama-server with the new GGUF file.[/dim]")
             state.console.print(f"  [dim]Then set it with:[/dim] /model <filename.gguf>")
             state.console.print()
+        elif active_provider not in ("ollama",):
+            # Any cloud provider: show cached discovered models, else query live.
+            from llm.fallback import list_provider_models
+            prov = next((p for p in get_available_providers() if p["name"] == active_provider), None)
+            models = (prov or {}).get("available_models") or []
+            if not models and prov:
+                state.console.print(f"[dim]  Querying {active_provider} for available models...[/dim]")
+                models = list_provider_models(prov)
+            if models:
+                current = state.config.get("model")
+                state.console.print(f"\n[bold]Available models ({active_provider}):[/bold]")
+                for m in models:
+                    marker = " [green]← active[/green]" if m == current else ""
+                    state.console.print(f"  • {m}{marker}")
+                state.console.print(f"\n  [dim]Switch with: /model <name>[/dim]\n")
+            else:
+                state.console.print(f"[yellow]  Could not list models for {active_provider}. "
+                                    f"Check the API key, or re-run /add_provider.[/yellow]")
         else:
             models = ollama_provider.list_models(state.config.get("ollama_host"))
             if models:

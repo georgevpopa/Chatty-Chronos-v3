@@ -116,6 +116,65 @@ def get_available_providers() -> list[dict]:
     return available
 
 
+def list_provider_models(provider: dict) -> list[str]:
+    """Discover available chat models for a provider by querying its API.
+
+    Handles two API shapes:
+      - Google Gemini native:   GET {base}/models?key=KEY  (base ends with /v1beta/openai
+        -> we strip /openai and use /v1beta/models). Returns models/<name>.
+      - OpenAI-compatible:       GET {base}/models  with Bearer KEY. Returns data[].id
+
+    Filters out obvious non-chat models (tts / image / embedding / audio / whisper /
+    vision-only). Returns a sorted list of model id strings. Empty list on any error.
+    """
+    _reload_env()
+    base_url = (provider.get("base_url") or "").rstrip("/")
+    env_key = provider.get("env_key") or ""
+    api_key = os.environ.get(env_key, "") if env_key else ""
+
+    _EXCLUDE = ("tts", "embedding", "embed", "whisper", "audio", "image",
+                "-image", "imagen", "lyria", "transcribe", "computer-use", "robotics")
+
+    def _is_chat(name: str) -> bool:
+        n = name.lower()
+        return not any(x in n for x in _EXCLUDE)
+
+    try:
+        # Gemini native catalog (base_url like https://.../v1beta/openai)
+        if "generativelanguage.googleapis.com" in base_url:
+            native = base_url.replace("/openai", "")  # -> .../v1beta
+            url = f"{native}/models"
+            with httpx.Client(timeout=15) as client:
+                resp = client.get(url, params={"key": api_key})
+                resp.raise_for_status()
+                data = resp.json()
+            models = []
+            for m in data.get("models", []):
+                methods = m.get("supportedGenerationMethods", [])
+                if "generateContent" in methods:
+                    mid = m.get("name", "").replace("models/", "")
+                    if mid and _is_chat(mid):
+                        models.append(mid)
+            return sorted(set(models))
+
+        # OpenAI-compatible /models
+        url = f"{base_url}/models"
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        with httpx.Client(timeout=15) as client:
+            resp = client.get(url, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
+        items = data.get("data", data.get("models", []))
+        models = []
+        for m in items:
+            mid = m.get("id") or m.get("name") or ""
+            if mid and _is_chat(mid):
+                models.append(mid)
+        return sorted(set(models))
+    except Exception:
+        return []
+
+
 def list_nvidia_models() -> list[str]:
     """Fetch active model catalog directly from NVIDIA endpoint using current environment key."""
     _reload_env()

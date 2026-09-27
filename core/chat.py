@@ -306,6 +306,7 @@ def _send_message_locked(user_input):
     except Exception as e:
         error_msg = str(e)
         log.error(f"LLM error ({provider}): {error_msg}", exc_info=True)
+        is_cloud = provider not in ("ollama", "llamacpp")
         if provider == "llamacpp":
             llamacpp_host = state.config.get("llamacpp_host", "http://localhost:8080")
             if "connection" in error_msg.lower() or "refused" in error_msg.lower():
@@ -313,6 +314,22 @@ def _send_message_locked(user_input):
                 state.console.print(f"  [dim]Start your server: llama-server --port 8080 --model your.gguf[/dim]\n")
             else:
                 state.console.print(f"[red]  llama.cpp error: {error_msg}[/red]\n")
+        elif is_cloud:
+            # Clean, actionable messages for cloud providers (no raw traceback, no
+            # misleading 'ollama pull' hint).
+            if "404" in error_msg:
+                state.console.print(f"[red]  Model '{model}' not found on {provider} (404).[/red]")
+                state.console.print(f"  [dim]List valid models with /models, then /model <name>.[/dim]\n")
+            elif "503" in error_msg:
+                state.console.print(f"[red]  {provider} is temporarily unavailable (503). Try again shortly, or switch model/provider.[/red]\n")
+            elif "429" in error_msg or "rate" in error_msg.lower():
+                state.console.print(f"[red]  {provider} rate-limited the request (429). Wait a moment or switch provider.[/red]\n")
+            elif "401" in error_msg or "403" in error_msg or "api key" in error_msg.lower():
+                state.console.print(f"[red]  {provider} rejected the API key (auth error). Check your key in ~/.chatty-chronos/.env[/red]\n")
+            elif "connection" in error_msg.lower() or "refused" in error_msg.lower():
+                state.console.print(f"[red]  Cannot reach {provider}. Check your internet connection.[/red]\n")
+            else:
+                state.console.print(f"[red]  {provider} error: {error_msg[:200]}[/red]\n")
         else:
             if "connection" in error_msg.lower() or "refused" in error_msg.lower():
                 state.console.print("[red]  Cannot connect to Ollama. Is it running?[/red]")
